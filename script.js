@@ -1,16 +1,21 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, serverTimestamp, addDoc, collection, getDoc, onSnapshot, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { 
+    getAuth, onAuthStateChanged 
+} from "firebase/auth";
+import { 
+    getFirestore, doc, setDoc, serverTimestamp, addDoc, collection, getDoc, 
+    onSnapshot, updateDoc, query, where, getDocs 
+} from "firebase/firestore";
 
-// Firebase Configuration
+// Firebase Configuration (Use environment variables for security)
 const firebaseConfig = {
     apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-    authDomain: "snaptalk-17f6d.firebaseapp.com",
-    projectId: "snaptalk-17f6d",
-    storageBucket: "snaptalk-17f6d.firebasestorage.app",
-    messagingSenderId: "592763376854",
-    appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-    measurementId: "G-BJ36XXEJQ3"
+  authDomain: "snaptalk-17f6d.firebaseapp.com",
+  projectId: "snaptalk-17f6d",
+  storageBucket: "snaptalk-17f6d.firebasestorage.app",
+  messagingSenderId: "592763376854",
+  appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+  measurementId: "G-BJ36XXEJQ3"
 };
 
 // Initialize Firebase
@@ -20,284 +25,158 @@ const auth = getAuth(app);
 
 // Firebase Authentication Listener
 onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log('User is logged in:', user);
-    } else {
-        console.log('No user logged in');
-    }
+    console.log(user ? `User logged in: ${user.uid}` : "No user logged in");
+    if (user) findChatPartner(user.uid);
 });
 
 // DOM Elements
-const locationSelect = document.getElementById('location');
-const settingsToggle = document.getElementById('settings-toggle');
-const settingsSection = document.getElementById('settings');
-const saveSettingsButton = document.getElementById('save-settings');
-const genderSelect = document.getElementById('gender');
-const ageSelect = document.getElementById('age');
-const topicsSelect = document.getElementById('topics');
-const chatBox = document.getElementById('chat-box');
-const chatInput = document.getElementById('chat-input');
-const sendButton = document.getElementById('send-button');
-const localVideo = document.getElementById('localVideo');
-const remoteVideo = document.getElementById('remoteVideo');
-const startVideoCallButton = document.getElementById('start-video-call');
-const acceptCallButton = document.getElementById('accept-call');
-const rejectCallButton = document.getElementById('reject-call');
+const elements = {
+    chatBox: document.getElementById('chat-box'),
+    chatInput: document.getElementById('chat-input'),
+    sendButton: document.getElementById('send-button'),
+    localVideo: document.getElementById('localVideo'),
+    remoteVideo: document.getElementById('remoteVideo'),
+    startVideoCallButton: document.getElementById('start-video-call'),
+};
 
-// Blacklisted words (inappropriate content)
-const blacklistedWords = [
-    "f***", "s***", "b****", "a******", "d***", "c***", "b******", "p****",
-    "sex", "porn", "nude", "pornography", "boobs", "penis", "vagina", "asshole", 
-    "masturbation", "cum", "hookup", "orgy", "racist", "xenophobe", "sexist", 
-    "homophobic", "bigot", "retard", "cripple", "kill", "murder", "rape", "abuse", 
-    "stabbing", "shoot", "violent", "terrorist", "suicide", "kill myself", "self-harm", 
-    "overdose", "cutting", "depressed", "hopeless", "address", "email", 
-    "social security number", "credit card", "bank account", "cocaine", "heroin", 
-    "weed", "meth", "marijuana", "ecstasy", "alcoholism"
-];
-
-// Nudity-related words (for age 13-17)
+// Predefined lists
+const blacklistedWords = ["sex", "porn", "nude", "racist", "kill", "suicide"];
 const nudityKeywords = ["nude", "porn", "boobs", "penis", "vagina", "sex"];
 
-// Populate Location Dropdown
-const countries = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'China', 'France', 'Germany', 'India', 'Italy', 'Japan', 'Mexico', 'Russia', 'United Kingdom', 'United States', 'South Africa'];
-countries.forEach(country => {
-    const option = document.createElement('option');
-    option.value = country;
-    option.textContent = country;
-    locationSelect.appendChild(option);
-});
+let chatPartnerId = null; // Store the matched user ID
 
-// Toggle Settings Visibility
-settingsToggle.addEventListener('click', () => {
-    settingsSection.style.display = settingsSection.style.display === 'none' ? 'block' : 'none';
-});
+/** ✅ Auto User Matching */
+async function findChatPartner(userId) {
+    const usersRef = collection(db, "users");
+    const availableUsersQuery = query(usersRef, where("isAvailable", "==", true), where("uid", "!=", userId));
 
-// Save Settings
-saveSettingsButton.addEventListener('click', () => {
-    const gender = genderSelect.value;
-    const age = ageSelect.value;
-    const location = locationSelect.value;
-    const topics = Array.from(topicsSelect.selectedOptions).map(option => option.value);
+    const querySnapshot = await getDocs(availableUsersQuery);
+    if (!querySnapshot.empty) {
+        const partner = querySnapshot.docs[0].data();
+        chatPartnerId = partner.uid;
+        await updateDoc(doc(db, "users", userId), { isAvailable: false, chatPartner: chatPartnerId });
+        await updateDoc(doc(db, "users", chatPartnerId), { isAvailable: false, chatPartner: userId });
 
-    console.log(`Gender: ${gender}, Age: ${age}, Location: ${location}, Topics: ${topics.join(', ')}`);
-    saveUserSettingsToFirebase(gender, age, location, topics);
-});
-
-// Save Settings to Firestore
-function saveUserSettingsToFirebase(gender, age, location, topics) {
-    const userId = auth.currentUser?.uid;
-    if (userId) {
-        setDoc(doc(db, 'userSettings', userId), {
-            gender,
-            age,
-            location,
-            topics,
-            lastUpdated: serverTimestamp(),
-        })
-        .then(() => {
-            alert('Settings saved!');
-        })
-        .catch(error => {
-            console.error('Error saving settings:', error);
-            alert('Error saving your settings.');
-        });
+        listenForMessages();
+    } else {
+        await updateDoc(doc(db, "users", userId), { isAvailable: true });
+    }
 }
 
-// Display Message in Chat Box
+/** ✅ Real-time Chat Listener */
+function listenForMessages() {
+    if (!chatPartnerId) return;
+    const chatRef = collection(db, "chats");
+    const chatQuery = query(chatRef, where("participants", "array-contains", auth.currentUser.uid));
+
+    onSnapshot(chatQuery, (snapshot) => {
+        elements.chatBox.innerHTML = "";
+        snapshot.docs.forEach((doc) => {
+            const { sender, message } = doc.data();
+            displayMessage(sender, message);
+        });
+    });
+}
+
+/** ✅ Send Message with Moderation */
+elements.sendButton.addEventListener('click', async () => {
+    const messageText = elements.chatInput.value.trim();
+    if (!messageText) return;
+
+    const userId = auth.currentUser?.uid;
+    if (!userId || !chatPartnerId) return alert("No chat partner found.");
+
+    const containsInappropriate = containsInappropriateContent(messageText);
+    const containsNudityContent = containsNudity(messageText);
+
+    if (containsNudityContent) {
+        await banUser(userId, 700);
+        alert('You are banned for 700 hours due to nudity.');
+        return;
+    }
+
+    if (containsInappropriate) {
+        await banUser(userId, 2);
+        alert('You are banned for 2 hours due to inappropriate content.');
+        return;
+    }
+
+    await saveChatToFirebase(userId, messageText);
+    elements.chatInput.value = "";
+});
+
+/** ✅ Save Message to Firestore */
+async function saveChatToFirebase(userId, messageText) {
+    const messageData = {
+        sender: userId,
+        message: messageText,
+        timestamp: serverTimestamp(),
+        participants: [userId, chatPartnerId]
+    };
+
+    await addDoc(collection(db, 'chats'), messageData);
+}
+
+/** ✅ Display Message */
 function displayMessage(sender, message) {
     const messageDiv = document.createElement('div');
     messageDiv.textContent = `${sender}: ${message}`;
-    chatBox.appendChild(messageDiv);
-    chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+    elements.chatBox.appendChild(messageDiv);
+    elements.chatBox.scrollTop = elements.chatBox.scrollHeight;
 }
 
-// Send Message
-sendButton.addEventListener('click', async () => {
-    const messageText = chatInput.value.trim();
-    if (messageText) {
-        const userName = auth.currentUser?.displayName || 'Anonymous';  // Default to 'Anonymous' if no display name
-        const userId = auth.currentUser?.uid;
-
-        // Check if the user is banned
-        const isBanned = await checkBanStatus(userId);
-        if (isBanned) {
-            alert('You are banned from sending messages.');
-            return;
-        }
-
-        // Get the user's age to determine if nudity detection is active
-        const userSettings = await getUserSettings(userId);
-        const isUnderage = userSettings.age >= 13 && userSettings.age <= 17;
-        const is18Plus = userSettings.age >= 18;
-
-        // Check for inappropriate content (blacklisted words)
-        if (containsInappropriateContent(messageText) && (isUnderage || is18Plus)) {
-            if (containsNudity(messageText) && isUnderage) {
-                await banUser(userId, 700 * 60 * 60 * 1000); // Ban for 700 hours
-                await reportToAuthorities(messageText, userId);
-                alert('You have been banned for 700 hours due to nudity.');
-            } else if (isUnderage) {
-                await banUser(userId, 2 * 60 * 60 * 1000); // Ban for 2 hours
-                await reportToAuthorities(messageText, userId);
-                alert('You have been banned for 2 hours due to inappropriate language.');
-            }
-            return;
-        }
-
-        // Display the message in chat box
-        displayMessage(userName, messageText);
-
-        // Clear input field
-        chatInput.value = '';
-
-        // Save message to Firebase
-        saveChatToFirebase(messageText);
-    }
-});
-
-// Save Message to Firestore
-function saveChatToFirebase(messageText) {
-    const messageData = {
-        sender: auth.currentUser?.uid || 'Anonymous',
-        message: messageText,
-        timestamp: serverTimestamp(),
-    };
-
-    addDoc(collection(db, 'messages'), messageData)
-        .then(() => {
-            console.log('Message saved to Firebase');
-        })
-        .catch(error => {
-            console.error('Error saving message:', error);
-        });
-}
-
-// Check for Inappropriate Content
+/** ✅ Check for Inappropriate Content */
 function containsInappropriateContent(message) {
     return blacklistedWords.some(word => message.toLowerCase().includes(word));
 }
 
-// Detect Nudity in Content
+/** ✅ Detect Nudity in Content */
 function containsNudity(message) {
     return nudityKeywords.some(word => message.toLowerCase().includes(word));
 }
 
-// Get User Settings
-async function getUserSettings(userId) {
-    const userRef = doc(db, 'userSettings', userId);
-    const userSnap = await getDoc(userRef);
-    return userSnap.data();
+/** ✅ Ban User */
+async function banUser(userId, hours) {
+    const bannedUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
+    await updateDoc(doc(db, 'users', userId), { bannedUntil });
+    console.log(`User banned for ${hours} hours.`);
 }
 
-// Check if User is Banned
-async function checkBanStatus(userId) {
-    const userRef = doc(db, 'users', userId);
-    const docSnap = await getDoc(userRef);
-
-    if (docSnap.exists()) {
-        const userData = docSnap.data();
-        const bannedUntil = userData.bannedUntil?.toDate();
-
-        if (bannedUntil && bannedUntil > new Date()) {
-            return true; // User is banned
-        }
-    }
-    return false; // User is not banned
-}
-
-// Ban User
-async function banUser(userId, banDuration) {
-    const userRef = doc(db, 'users', userId);
-    
-    try {
-        await setDoc(userRef, {
-            bannedUntil: new Date(Date.now() + banDuration),
-        }, { merge: true });
-
-        console.log(`User banned for ${banDuration / (1000 * 60 * 60)} hours`);
-    } catch (error) {
-        console.error('Error banning user:', error);
-    }
-}
-
-// Report Content to Authorities
-async function reportToAuthorities(content, userId) {
-    const reportData = {
-        content: content,
-        userId: userId,
-        timestamp: serverTimestamp(),
-    };
+/** ✅ WebRTC: Start Video Call */
+elements.startVideoCallButton.addEventListener('click', async () => {
+    if (!chatPartnerId) return alert("No chat partner found.");
 
     try {
-        await addDoc(collection(db, 'policeReports'), reportData);
-        console.log('Report sent to authorities');
+        const peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        elements.localVideo.srcObject = localStream;
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = (event) => {
+            elements.remoteVideo.srcObject = event.streams[0];
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        await setDoc(doc(db, 'signaling', auth.currentUser.uid), { offer, timestamp: serverTimestamp() });
+
+        listenForAnswer(peerConnection);
     } catch (error) {
-        console.error('Error reporting to authorities:', error);
+        console.error("Error setting up video call:", error);
     }
-}
+});
 
-// WebRTC: Start Video Call
-startVideoCallButton.addEventListener('click', async () => {
-    const userSettings = await getUserSettings(auth.currentUser.uid);
-    const isUnderage = userSettings.age >= 13 && userSettings.age <= 17;
-    if (isUnderage) {
-        alert('Video calls are not allowed for users under 18.');
-        return;
-    }
-
-    // WebRTC setup (signaling, peer connection)
-    const peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] // STUN server
-    });
-
-    // Get media stream (audio/video)
-    const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    localVideo.srcObject = localStream;
-
-    // Add local tracks to the connection
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-    // Set up signaling (via Firestore or custom signaling server)
-    const signalingDocRef = doc(db, 'signaling', auth.currentUser.uid);
-
-    // Send Offer to peer
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    await setDoc(signalingDocRef, { offer: offer, timestamp: serverTimestamp() });
-
-    // Handle ICE candidate gathering
-    peerConnection.onicecandidate = async (event) => {
-        if (event.candidate) {
-            await setDoc(signalingDocRef, {
-                iceCandidates: firebase.firestore.FieldValue.arrayUnion(event.candidate),
-                timestamp: serverTimestamp()
-            }, { merge: true });
-        }
-    };
-
-    // Handle remote stream
-    peerConnection.ontrack = (event) => {
-        remoteVideo.srcObject = event.streams[0];
-    };
-
-    // Listen for the peer's offer and set up the connection
-    const unsubscribe = onSnapshot(signalingDocRef, async (snapshot) => {
-        const data = snapshot.data();
-        if (data?.offer && !peerConnection.remoteDescription) {
-            const offer = new RTCSessionDescription(data.offer);
-            await peerConnection.setRemoteDescription(offer);
-
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            await setDoc(signalingDocRef, { answer: answer, timestamp: serverTimestamp() });
-
-            // Send ICE candidates from remote peer
-            if (data?.iceCandidates) {
-                data.iceCandidates.forEach(async (candidate) => {
-                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-                });
+/** ✅ WebRTC: Listen for Answer */
+function listenForAnswer(peerConnection) {
+    const signalingDoc = doc(db, 'signaling', chatPartnerId);
+    onSnapshot(signalingDoc, async (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.answer) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
             }
         }
     });
-});
+}
