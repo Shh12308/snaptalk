@@ -7,11 +7,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="chat-container">
+    <!-- Video Call Section -->
     <div class="video-call">
         <div class="video-container" id="video-container">
-            <video id="remoteVideo" autoplay></video>
-            <video id="localVideo" autoplay muted></video>
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay muted playsinline></video>
         </div>
         <div class="controls">
             <button id="skip">Skip</button>
@@ -19,20 +21,25 @@
         </div>
     </div>
 
+    <!-- User Info -->
     <div class="user-info" id="user-info">
-        <img id="user-avatar" src="" alt="User Avatar">
+        <img id="user-avatar" src="default-avatar.png" alt="User Avatar" onerror="this.src='default-avatar.png'">
         <span id="user-name">Loading...</span>
     </div>
 
-    <!-- Settings Toggle & Form -->
-    <div id="settings-toggle">Settings</div>
-    <div class="settings" id="settings" style="display: none;">
+    <!-- Settings Toggle -->
+    <button id="settings-toggle">⚙️ Settings</button>
+
+    <!-- Settings Form (Initially Hidden) -->
+    <div class="settings" id="settings">
+        <h3>User Preferences</h3>
+
         <label for="gender">Gender:</label>
         <select id="gender">
             <option value="male">Male</option>
             <option value="female">Female</option>
             <option value="other">Other</option>
-        </select><br>
+        </select>
 
         <label for="age">Age:</label>
         <select id="age">
@@ -41,11 +48,11 @@
             <option value="15">15</option>
             <option value="16">16</option>
             <option value="17">17</option>
-            <option value="18+">18+</option>
-        </select><br>
+            <option value="18">18+</option>
+        </select>
 
         <label for="location">Location:</label>
-        <select id="location"></select><br>
+        <select id="location"></select>
 
         <label for="topics">Topics:</label>
         <select id="topics" multiple>
@@ -54,32 +61,94 @@
             <option value="music">Music</option>
             <option value="movies">Movies</option>
             <option value="sports">Sports</option>
-        </select><br>
+        </select>
 
         <button id="save-settings">Save Settings</button>
     </div>
 
-    <!-- Chat Box -->
+    <!-- Chat Section -->
     <div id="chat-box"></div>
-    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
     <button id="send-button">Send</button>
 </div>
+
+<!-- Call Controls -->
 <div class="controls">
     <button id="start-video-call">Start Video</button>
     <button id="accept-call">Accept</button>
     <button id="reject-call">Reject</button>
 </div>
-<!-- Report Modal -->
-<div id="report-modal">
-    <div class="modal-content">
-        <label for="report-reason">Reason for Report:</label>
-        <textarea id="report-reason" rows="4"></textarea>
-        <button id="submit-report">Submit Report</button>
-        <button id="close-report">Close</button>
-    </div>
-</div>
 
-<!-- Link to External JavaScript -->
+<!-- JavaScript -->
 <script src="script.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const settingsToggle = document.getElementById("settings-toggle");
+    const settingsSection = document.getElementById("settings");
+    const saveSettingsButton = document.getElementById("save-settings");
+    const ageSelect = document.getElementById("age");
+    const chatInput = document.getElementById("chat-input");
+    const sendButton = document.getElementById("send-button");
+
+    // Blacklisted words (for 13-17 age restriction)
+    const blacklistedWords = ["sex", "porn", "nude", "racist", "kill", "suicide"];
+    const nudityKeywords = ["nude", "porn", "boobs", "penis", "vagina", "sex"];
+
+    let userAge = 18; // Default unrestricted
+
+    // ✅ FIXED: Toggle settings visibility properly
+    settingsToggle.addEventListener("click", () => {
+        if (settingsSection.style.display === "none" || settingsSection.style.display === "") {
+            settingsSection.style.display = "block";
+        } else {
+            settingsSection.style.display = "none";
+        }
+    });
+
+    // ✅ Save user settings
+    saveSettingsButton.addEventListener("click", () => {
+        userAge = parseInt(ageSelect.value);
+        alert(`Settings saved! Restrictions ${userAge < 18 ? "enabled" : "disabled"}.`);
+    });
+
+    // ✅ Function to detect inappropriate messages
+    function containsInappropriateContent(message) {
+        return blacklistedWords.some(word => message.toLowerCase().includes(word));
+    }
+
+    function containsNudity(message) {
+        return nudityKeywords.some(word => message.toLowerCase().includes(word));
+    }
+
+    // ✅ Send message with filtering based on age
+    sendButton.addEventListener("click", () => {
+        const messageText = chatInput.value.trim();
+        if (!messageText) return;
+
+        if (userAge < 18) {
+            if (containsNudity(messageText)) {
+                alert("Nudity is not allowed for users under 18.");
+                return;
+            }
+            if (containsInappropriateContent(messageText)) {
+                alert("Inappropriate words are not allowed.");
+                return;
+            }
+        }
+
+        // Display and send message
+        displayMessage("You", messageText);
+        chatInput.value = "";
+    });
+
+    function displayMessage(sender, message) {
+        const messageDiv = document.createElement("div");
+        messageDiv.textContent = `${sender}: ${message}`;
+        document.getElementById("chat-box").appendChild(messageDiv);
+    }
+});
+</script>
+
 </body>
 </html>
