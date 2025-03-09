@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Snaptalk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f4f4;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .contact-container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            width: 600px;
+            max-width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 1rem;
+            margin: 12px 0 8px;
+            text-align: left;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            margin: 8px 0 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #007bff;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 14px 22px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            font-size: 0.9rem;
+            margin-top: 20px;
+            color: #777;
+        }
+
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .rating label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="contact-container">
+    <h1>Contact Us</h1>
+
+    <form action="https://formspree.io/f/your-form-id" method="POST" id="contact-form">
+        <!-- Step 1: Select Feedback Type -->
+        <div id="feedback-type-section">
+            <label for="feedback-type">What type of feedback are you providing?</label>
+            <select id="feedback-type" name="feedback-type" required>
+                <option value="">Select Feedback Type</option>
+                <option value="report">Report a User</option>
+                <option value="suggestion">Feature Suggestion</option>
+                <option value="general">General Feedback</option>
+            </select>
+        </div>
+
+        <!-- Step 2: Report a User (Only if 'Report a User' is selected) -->
+        <div id="report-user-section" style="display: none;">
+            <label for="reported-name">Display Name of User to Report</label>
+            <input type="text" id="reported-name" name="reported-name" placeholder="Enter the display name of the user" required>
+
+            <label for="report-details">Please describe what happened:</label>
+            <textarea id="report-details" name="report-details" rows="5" placeholder="Enter a detailed description of the incident" required></textarea>
+        </div>
+
+        <!-- Step 2: Description of Feature Suggestion or General Feedback -->
+        <div id="message-section" style="display: none;">
+            <label for="message">Please write your message:</label>
+            <textarea id="message" name="message" rows="5" placeholder="Enter your suggestion or feedback here" required></textarea>
+        </div>
+
+        <!-- Step 3: User's Email -->
+        <div id="email-section" style="display: none;">
+            <label for="email">Your Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        </div>
+
+        <!-- Step 4: Rating (for suggestions or feedback) -->
+        <div id="rating-section" style="display: none;">
+            <label for="rating">Rate your experience:</label>
+            <div class="rating">
+                <input type="radio" id="star5" name="rating" value="5">
+                <label for="star5">5</label>
+                <input type="radio" id="star4" name="rating" value="4">
+                <label for="star4">4</label>
+                <input type="radio" id="star3" name="rating" value="3">
+                <label for="star3">3</label>
+                <input type="radio" id="star2" name="rating" value="2">
+                <label for="star2">2</label>
+                <input type="radio" id="star1" name="rating" value="1">
+                <label for="star1">1</label>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" style="display: none;" id="submit-button">Submit</button>
+    </form>
+
+    <div class="footer">
+        <p>Have any questions? <a href="mailto:support@snaptalk.com">Email us!</a></p>
+    </div>
+</div>
+
+<script>
+    // Handle the feedback type selection
+    document.getElementById('feedback-type').addEventListener('change', function() {
+        const feedbackValue = this.value;
+
+        // If 'Report a User' is selected, show report-related fields
+        if (feedbackValue === 'report') {
+            document.getElementById('report-user-section').style.display = 'block';
+            document.getElementById('message-section').style.display = 'none';
+            document.getElementById('email-section').style.display = 'none';
+            document.getElementById('rating-section').style.display = 'none';
+            document.getElementById('submit-button').style.display = 'inline-block';
+        } 
+        // If 'Feature Suggestion' or 'General Feedback' is selected
+        else if (feedbackValue === 'suggestion' || feedbackValue === 'general') {
+            document.getElementById('report-user-section').style.display = 'none';
+            document.getElementById('message-section').style.display = 'block';
+            document.getElementById('email-section').style.display = 'block';
+            document.getElementById('rating-section').style.display = 'block';
+            document.getElementById('submit-button').style.display = 'inline-block';
+        } else {
+            // Hide all sections if no selection
+            document.getElementById('report-user-section').style.display = 'none';
+            document.getElementById('message-section').style.display = 'none';
+            document.getElementById('email-section').style.display = 'none';
+            document.getElementById('rating-section').style.display = 'none';
+            document.getElementById('submit-button').style.display = 'none';
+        }
+    });
+
+    // Handle form submission
+    const form = document.getElementById('contact-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Get form data (this can be sent to the server, logged, etc.)
+        const feedbackType = document.getElementById('feedback-type').value;
+        const reportedName = document.getElementById('reported-name').value;
+        const reportDetails = document.getElementById('report-details').value;
+        const userMessage = document.getElementById('message').value;
+        const userEmail = document.getElementById('email').value;
+        const rating = document.querySelector('input[name="rating"]:checked') ? document.querySelector('input[name="rating"]:checked').value : null;
+
+        if (feedbackType === 'report') {
+            alert(`Thank you for reporting! We will review the issue with "${reportedName}" soon.\n\nDetails: ${reportDetails}`);
+        } else if (feedbackType === 'suggestion' || feedbackType === 'general') {
+            alert(`Thank you for your feedback!\n\nMessage: ${userMessage}\nRating: ${rating}`);
+        }
+
+        // Reset the form
+        form.reset();
+
+        // Redirect to homepage after a short delay
+        setTimeout(function() {
+            window.location.href = '/'; // Redirect to home page (adjust path if necessary)
+        }, 1500); // 1.5 seconds delay
+    });
+</script>
+
+</body>
+</html>

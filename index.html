@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snaptalk - Sign Up</title>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { 
+            getAuth, createUserWithEmailAndPassword, updateProfile 
+        } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+            authDomain: "snaptalk-17f6d.firebaseapp.com",
+            projectId: "snaptalk-17f6d",
+            storageBucket: "snaptalk-17f6d.appspot.com",
+            messagingSenderId: "592763376854",
+            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+            measurementId: "G-BJ36XXEJQ3"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const errorMessage = document.getElementById("error-message");
+            const countryInput = document.getElementById("country");
+
+            let userIP = "Unknown";
+            let userCountry = "Unknown";
+
+            // Get User's IP & Country
+            async function getUserIP() {
+                try {
+                    let response = await fetch("https://ipapi.co/json/");
+                    let data = await response.json();
+                    userIP = data.ip || "Unknown";
+                    userCountry = data.country_name || "Unknown";
+                    countryInput.value = userCountry; // Display detected country in the form
+                } catch (error) {
+                    console.error("Error fetching IP/location:", error);
+                    countryInput.value = "Could not detect";
+                }
+            }
+
+            // Fetch IP and Location on Page Load
+            await getUserIP();
+
+            // Handle Email Sign-Up
+            document.getElementById("signup-form").addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                let displayName = document.getElementById("display-name").value.trim();
+                let email = document.getElementById("email").value.trim();
+                let age = parseInt(document.getElementById("age").value);
+                let gender = document.getElementById("gender").value;
+                let password = document.getElementById("password").value;
+                let confirmPassword = document.getElementById("confirm-password").value;
+
+                errorMessage.textContent = "";
+
+                // Validation
+                if (age < 13) {
+                    errorMessage.textContent = "You must be at least 13 years old.";
+                    return;
+                }
+                if (password.length < 8 || !/\d/.test(password) || !/[A-Za-z]/.test(password)) {
+                    errorMessage.textContent = "Password must be at least 8 characters with letters & numbers.";
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = "Passwords do not match.";
+                    return;
+                }
+
+                try {
+                    // Create User in Firebase Auth
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Update Display Name
+                    await updateProfile(user, { displayName }).catch(err => {
+                        console.error("Error updating profile:", err);
+                    });
+
+                    // Store User Data in Firestore (Including IP & Country)
+                    await setDoc(doc(db, "users", user.uid), {
+                        displayName,
+                        email,
+                        age,
+                        gender,
+                        ip: userIP,
+                        country: userCountry
+                    }).catch(err => {
+                        console.error("Error writing to Firestore:", err);
+                    });
+
+                    // Redirect to home.html after successful registration
+                    alert("Sign-up successful! Redirecting...");
+                    window.location.href = "home.html";
+
+                } catch (error) {
+                    console.error("Error during sign-up:", error);
+                    errorMessage.textContent = error.message;
+                }
+            });
+        });
+    </script>
+
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #00ffcc;
+        }
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+        }
+        h1 { color: #00ffcc; }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background: #1b1b2f;
+            color: #00ffcc;
+            font-size: 16px;
+        }
+        button {
+            background-color: #00ffcc;
+            color: #1b1b2f;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .error { color: #ff4d4d; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 id="site-title">Snaptalk - Sign Up</h1>
+        <form id="signup-form">
+            <input type="text" id="display-name" placeholder="Enter Display Name" required>
+            <input type="email" id="email" placeholder="Enter Email" required>
+            <input type="number" id="age" placeholder="Enter Age (13+)" required>
+
+            <select id="gender" required>
+                <option value="" disabled selected>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+
+            <input type="text" id="country" placeholder="Detecting Country..." disabled>
+            
+            <input type="password" id="password" placeholder="Enter Password" required>
+            <input type="password" id="confirm-password" placeholder="Confirm Password" required>
+
+            <button type="submit" id="signup-btn">Sign Up</button>
+        </form>
+        <div id="error-message" class="error"></div>
+    </div>
+
+</body>
+</html>

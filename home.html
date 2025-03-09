@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snaptalk - Home</title>
+
+    <!-- Google AdSense Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5847677612423434" crossorigin="anonymous"></script> 
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+    <style>
+       * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(45deg, #ff8c00, #ff4081, #009688);
+    background-size: 300% 300%;
+    animation: rainbowBackground 15s infinite linear;
+    padding-top: 30px;  /* Adjusted padding-top to lift the content */
+}
+
+/* Fun Background Animation */
+@keyframes rainbowBackground {
+    0% { background: linear-gradient(45deg, #ff8c00, #ff4081, #009688); }
+    25% { background: linear-gradient(45deg, #ff4081, #2196f3, #ff9800); }
+    50% { background: linear-gradient(45deg, #2196f3, #673ab7, #ff4081); }
+    75% { background: linear-gradient(45deg, #673ab7, #4caf50, #ff8c00); }
+    100% { background: linear-gradient(45deg, #ff8c00, #ff4081, #009688); }
+}
+
+/* Main Container */
+.container {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    max-width: 450px;
+    width: 90%;
+    margin-top: 20px;  /* Lifted the container a little higher */
+    margin-bottom: 20px;
+}
+
+.container h1 {
+    font-size: 42px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.container p {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: 400;
+}
+
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn {
+    padding: 14px 30px;
+    font-size: 22px;
+    width: 250px;
+    cursor: pointer;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+}
+
+.btn:hover {
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Footer Styles */
+footer {
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    text-align: center;
+    padding: 18px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    border-top: 2px solid #ff4081;
+}
+
+footer a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    transition: color 0.3s ease-in-out;
+}
+
+footer a:hover {
+    color: #ff4081;
+}
+
+footer .donate-btn {
+    background: #ff4081;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 18px;
+    text-decoration: none;
+    color: white;
+    transition: background 0.3s;
+}
+
+footer .donate-btn:hover {
+    background: #ff1c68;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 25px;
+    max-width: 600px;
+    width: 80%;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.close-btn {
+    background: #ff0000;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.close-btn:hover {
+    background: #d50000;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 85%;
+        padding: 15px;
+    }
+
+    .container h1 {
+        font-size: 32px;
+    }
+
+    .container p {
+        font-size: 18px;
+    }
+
+    .btn {
+        font-size: 18px;
+        width: 220px;
+        padding: 12px 25px;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    footer .donate-btn {
+        font-size: 16px;
+        padding: 12px 25px;
+    }
+
+    footer a {
+        font-size: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container h1 {
+        font-size: 28px;
+    }
+
+    .container p {
+        font-size: 16px;
+    }
+
+    .btn {
+        font-size: 16px;
+        width: 200px;
+        padding: 10px 20px;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    footer .donate-btn {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+
+    footer a {
+        font-size: 14px;
+    }
+}
+    </style>
+</head>
+<body>
+
+    <!-- Top Ad Container -->
+    <div class="ad-container-top">
+        <ins class="adsbygoogle"
+            style="display:block; width:100%; height:80px;"
+            data-ad-client="ca-pub-5847677612423434"
+            data-ad-slot="YOUR_AD_SLOT"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Welcome to Snaptalk!</h1>
+        <p>Connect instantly with new people. Choose between video or text chat.</p>
+
+        <p id="user-status">Checking login status...</p>
+        <p id="online-users">Online Users: 0</p>
+        <div class="btn-container">
+            <button class="btn" id="text-chat"><a href="chat.html" style="color: white;">Start Video Chat</a></button>
+            <button class="btn" id="text-chat"><a href="message.html" style="color: white;">Start Text Chat</a></button>
+            <button class="btn" id="disclaimer-btn">Read Disclaimer</button>
+        </div>
+    </div>
+
+    <!-- Modal for Disclaimer -->
+    <div class="modal" id="disclaimer-modal">
+        <div class="modal-content">
+            <h2>Disclaimer</h2>
+            <p><strong>DISCLAIMER:</strong> If you are aged 13-17 and choose to enter the 18+ section, 
+            I am not responsible for anything sexual, including nudity.  
+            If anyone enters the 13-17 section, regardless of their age, and engages in inappropriate behavior,  
+            they will be banned, and information may be sent to the police for safety reasons.</p>
+            <button class="close-btn" id="close-modal">Close</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <a href="profile.html">Profile</a>
+        <a href="message.html">Messages</a>
+        <a href="settings.html">Settings</a>
+        <a href="contact.html">Contact</a>
+        <a href="donate.html" class="donate-btn">Donate Now</a>
+    </footer>
+
+    <script>
+        // Get modal elements
+        const disclaimerModal = document.getElementById('disclaimer-modal');
+        const disclaimerBtn = document.getElementById('disclaimer-btn');
+        const closeModal = document.getElementById('close-modal');
+
+        // Open modal when button clicked
+        disclaimerBtn.addEventListener('click', () => {
+            disclaimerModal.style.display = 'flex';
+        });
+
+        // Close modal when close button is clicked
+        closeModal.addEventListener('click', () => {
+            disclaimerModal.style.display = 'none';
+        });
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+            authDomain: "snaptalk-17f6d.firebaseapp.com",
+            projectId: "snaptalk-17f6d",
+            storageBucket: "snaptalk-17f6d.firebasestorage.app",
+            messagingSenderId: "592763376854",
+            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+            measurementId: "G-BJ36XXEJQ3"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const userStatus = document.getElementById("user-status");
+        const onlineUsersDisplay = document.getElementById("online-users");
+
+        // Firestore References
+        const onlineUsersRef = db.collection("meta").doc("onlineUsers");
+
+        // Function to update online user count
+        async function updateOnlineUsers(change){
+            const doc = await onlineUsersRef.get();
+            let onlineCount = doc.exists ? doc.data().count : 0;
+
+            if (change === "increase") {
+                onlineUsersRef.set({ count: onlineCount + 1 }, { merge: true });
+            } else if (change === "decrease" && onlineCount > 0) {
+                onlineUsersRef.set({ count: onlineCount - 1 }, { merge: true });
+            }
+        }
+
+        // Monitor real-time updates to online users
+        onlineUsersRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                onlineUsersDisplay.innerText = `Online Users: ${doc.data().count}`;
+            }
+        });
+
+        // Auth State Listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                userStatus.innerText = `Logged in as ${user.displayName || "User"}`;
+            } else {
+                userStatus.innerText = "Not logged in. Please sign in.";
+            }
+        });
+
+    </script>
+</body>
+</html>

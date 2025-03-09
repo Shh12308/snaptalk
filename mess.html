@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User History</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #001f3d; /* Dark Blue background */
+            color: white;
+            padding: 20px;
+            margin: 0;
+            position: relative;
+        }
+
+        .history-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #004080; /* Blue background for history container */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .history-item .details {
+            flex-grow: 1;
+        }
+
+        .history-item .details h3 {
+            margin: 0;
+            color: #f0f0f0;
+        }
+
+        .history-item .details p {
+            margin: 5px 0 0;
+            color: #ddd;
+        }
+
+        .back-btn, .go-to-notifications-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .back-btn:hover, .go-to-notifications-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Notification Button (Now goes to a new Notification Page) */
+        .notification-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: #ff5c8d;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 🔔 Notification Button (Links to Notifications Page) -->
+    <button class="notification-btn" onclick="window.location.href='notifications.html';">🔔</button>
+
+    <div class="history-container">
+        <h1>Your Connection History</h1>
+        <div id="history-list"></div>
+        <button class="back-btn" onclick="window.location.href='home.html';">Back to Home</button>
+        <button class="go-to-notifications-btn" onclick="window.location.href='notifications.html';">Go to Notifications</button>
+    </div>
+
+    <script>
+        // 🔥 Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ✅ Fetch User Connection History
+        async function fetchHistory() {
+            const user = auth.currentUser;
+            if (user) {
+                const historyRef = db.collection("users").doc(user.uid).collection("history");
+                const snapshot = await historyRef.get();
+                const historyList = document.getElementById("history-list");
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const historyItem = document.createElement("div");
+                    historyItem.classList.add("history-item");
+
+                    historyItem.innerHTML = `
+                        <img src="${data.profilePicUrl || 'default-profile-pic.png'}" alt="${data.name}">
+                        <div class="details">
+                            <h3>${data.name}</h3>
+                            <p>Chat Type: ${data.chatType}</p>
+                            <p>Connected on: ${new Date(data.timestamp.seconds * 1000).toLocaleString()}</p>
+                        </div>
+                    `;
+
+                    historyItem.addEventListener("click", () => viewProfile(data.userId));
+                    historyList.appendChild(historyItem);
+                });
+            } else {
+                alert("Please log in to view your history.");
+            }
+        }
+
+        function viewProfile(userId) {
+            window.location.href = `profile.html?uid=${userId}`;
+        }
+
+        fetchHistory();
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snaptalk - Video Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="chat-container">
+    <div class="video-call">
+        <div class="video-container" id="video-container">
+            <video id="remoteVideo" autoplay></video>
+            <video id="localVideo" autoplay muted></video>
+        </div>
+        <div class="controls">
+            <button id="skip">Skip</button>
+            <button id="stop">Stop</button>
+        </div>
+    </div>
+
+    <div class="user-info" id="user-info">
+        <img id="user-avatar" src="" alt="User Avatar">
+        <span id="user-name">Loading...</span>
+    </div>
+
+    <!-- Settings Toggle & Form -->
+    <div id="settings-toggle">Settings</div>
+    <div class="settings" id="settings" style="display: none;">
+        <label for="gender">Gender:</label>
+        <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+        </select><br>
+
+        <label for="age">Age:</label>
+        <select id="age">
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18+">18+</option>
+        </select><br>
+
+        <label for="location">Location:</label>
+        <select id="location"></select><br>
+
+        <label for="topics">Topics:</label>
+        <select id="topics" multiple>
+            <option value="technology">Technology</option>
+            <option value="gaming">Gaming</option>
+            <option value="music">Music</option>
+            <option value="movies">Movies</option>
+            <option value="sports">Sports</option>
+        </select><br>
+
+        <button id="save-settings">Save Settings</button>
+    </div>
+
+    <!-- Chat Box -->
+    <div id="chat-box"></div>
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <button id="send-button">Send</button>
+</div>
+<div class="controls">
+    <button id="start-video-call">Start Video</button>
+    <button id="accept-call">Accept</button>
+    <button id="reject-call">Reject</button>
+</div>
+<!-- Report Modal -->
+<div id="report-modal">
+    <div class="modal-content">
+        <label for="report-reason">Reason for Report:</label>
+        <textarea id="report-reason" rows="4"></textarea>
+        <button id="submit-report">Submit Report</button>
+        <button id="close-report">Close</button>
+    </div>
+</div>
+
+<!-- Link to External JavaScript -->
+<script src="script.js"></script>
+</body>
+</html>

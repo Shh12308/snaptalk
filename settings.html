@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Snaptalk</title>
+    
+    <!-- Firebase SDK v9+ Modular -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut, updateEmail, updatePassword, updateProfile, deleteUser } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+        import { getFirestore, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js';
+
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+            authDomain: "snaptalk-17f6d.firebaseapp.com",
+            projectId: "snaptalk-17f6d",
+            storageBucket: "snaptalk-17f6d.appspot.com",
+            messagingSenderId: "592763376854",
+            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+            measurementId: "G-BJ36XXEJQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        const newEmail = document.getElementById("new-email");
+        const newPassword = document.getElementById("new-password");
+        const newDisplayName = document.getElementById("new-display-name");
+        const emailDisplay = document.getElementById("email-display");
+        const displayNameDisplay = document.getElementById("display-name-display");
+        const passwordStrengthBoxes = document.querySelectorAll(".password-strength-box");
+        const updateEmailBtn = document.getElementById("update-email");
+        const updatePasswordBtn = document.getElementById("update-password");
+        const updateDisplayNameBtn = document.getElementById("update-display-name");
+        const deleteAccountBtn = document.getElementById("delete-account");
+        const logoutBtn = document.getElementById("logout");
+        const messageBox = document.getElementById("message");
+
+        // Show Success/Error Message
+        function showMessage(text, color) {
+            messageBox.innerText = text;
+            messageBox.style.color = color;
+            setTimeout(() => messageBox.innerText = "", 3000);
+        }
+
+        // Password Strength Meter (5 boxes)
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            const lengthCriteria = password.length >= 8;
+            const numberCriteria = /[0-9]/.test(password);
+            const uppercaseCriteria = /[A-Z]/.test(password);
+            const specialCharCriteria = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+            if (lengthCriteria) strength++;
+            if (numberCriteria) strength++;
+            if (uppercaseCriteria) strength++;
+            if (specialCharCriteria) strength++;
+
+            // Update the strength meter with boxes
+            passwordStrengthBoxes.forEach((box, index) => {
+                if (index < strength) {
+                    box.style.backgroundColor = "#2ecc71";  // Green for strength
+                } else {
+                    box.style.backgroundColor = "#e74c3c";  // Red for lack of strength
+                }
+            });
+        }
+
+        // Event Listener to check password strength in real time
+        newPassword.addEventListener("input", (event) => {
+            const password = event.target.value;
+            checkPasswordStrength(password);
+        });
+
+        // Update Display Name
+        updateDisplayNameBtn.addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (user && newDisplayName.value) {
+                updateProfile(user, { displayName: newDisplayName.value }).then(() => {
+                    const userRef = doc(db, "users", user.uid);
+                    updateDoc(userRef, { displayName: newDisplayName.value }).then(() => {
+                        showMessage("Display Name updated successfully!", "green");
+                        displayNameDisplay.textContent = newDisplayName.value;
+                    });
+                }).catch(error => {
+                    showMessage(error.message, "red");
+                });
+            } else {
+                showMessage("Please enter a valid display name.", "red");
+            }
+        });
+
+        // Update Email
+        updateEmailBtn.addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (user && newEmail.value) {
+                updateEmail(user, newEmail.value).then(() => {
+                    showMessage("Email updated successfully!", "green");
+                    emailDisplay.textContent = newEmail.value;
+                }).catch(error => {
+                    showMessage(error.message, "red");
+                });
+            } else {
+                showMessage("Please enter a valid email.", "red");
+            }
+        });
+
+        // Update Password
+        updatePasswordBtn.addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (user && newPassword.value.length >= 6) {
+                updatePassword(user, newPassword.value).then(() => {
+                    showMessage("Password updated successfully!", "green");
+                }).catch(error => {
+                    showMessage(error.message, "red");
+                });
+            } else {
+                showMessage("Password must be at least 6 characters.", "red");
+            }
+        });
+
+        // Delete Account
+        deleteAccountBtn.addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (user) {
+                if (confirm("Are you sure you want to delete your account? This cannot be undone!")) {
+                    const userRef = doc(db, "users", user.uid);
+                    deleteDoc(userRef).then(() => {
+                        deleteUser(user).then(() => {
+                            showMessage("Account deleted.", "red");
+                            setTimeout(() => window.location.href = "index.html", 2000);
+                        }).catch(error => {
+                            showMessage(error.message, "red");
+                        });
+                    }).catch(error => {
+                        showMessage(error.message, "red");
+                    });
+                }
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener("click", () => {
+            signOut(auth).then(() => {
+                window.location.href = "index.html";
+            });
+        });
+
+        // Check User Authentication
+        onAuthStateChanged(auth, user => {
+            if (!user) {
+                window.location.href = "index.html";  // Redirect to login if not signed in
+            } else {
+                // Set current email and display name
+                emailDisplay.textContent = user.email || '';
+                displayNameDisplay.textContent = user.displayName || 'No display name';
+                newEmail.value = user.email || '';
+                newDisplayName.value = user.displayName || '';
+            }
+        });
+    </script>
+
+    <style>
+        /* ✅ General Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { 
+            background: linear-gradient(45deg, #1e1e1e, #4b0082); 
+            color: white; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh;
+        }
+
+        /* ✅ Container */
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h1 { font-size: 26px; margin-bottom: 15px; }
+
+        /* ✅ Input Fields */
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        /* ✅ Password Strength Boxes */
+        .password-strength {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .password-strength-box {
+            width: 16%;
+            height: 10px;
+            background-color: #e74c3c;
+            border-radius: 3px;
+        }
+
+        /* ✅ Buttons */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        #update-email { background: #00c6ff; color: white; }
+        #update-email:hover { background: #0080c0; }
+
+        #update-password { background: #ffcc00; color: black; }
+        #update-password:hover { background: #d9a600; }
+
+        #update-display-name { background: #28a745; color: white; }
+        #update-display-name:hover { background: #218838; }
+
+        #delete-account { background: #ff2e63; color: white; }
+        #delete-account:hover { background: #d8264f; }
+
+        #logout { background: #444; color: white; }
+        #logout:hover { background: #222; }
+
+        /* ✅ Messages */
+        .message {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Settings</h1>
+
+        <!-- Display Email and Display Name -->
+        <p><strong>Email:</strong> <span id="email-display">Loading...</span></p>
+        <p><strong>Display Name:</strong> <span id="display-name-display">Loading...</span></p>
+
+        <!-- Update Email -->
+        <input type="email" id="new-email" class="input-field" placeholder="New Email">
+        <button id="update-email" class="btn">Update Email</button>
+
+        <!-- Update Display Name -->
+        <input type="text" id="new-display-name" class="input-field" placeholder="New Display Name">
+        <button id="update-display-name" class="btn">Update Display Name</button>
+
+        <!-- Password Update -->
+        <input type="password" id="new-password" class="input-field" placeholder="New Password">
+        <div class="password-strength">
+            <div class="password-strength-box"></div>
+            <div class="password-strength-box"></div>
+            <div class="password-strength-box"></div>
+            <div class="password-strength-box"></div>
+            <div class="password-strength-box"></div>
+        </div>
+        <button id="update-password" class="btn">Update Password</button>
+
+        <!-- Account Deletion and Logout -->
+        <button id="delete-account" class="btn">Delete Account</button>
+        <button id="logout" class="btn">Logout</button>
+
+        <p id="message" class="message"></p>
+    </div>
+
+</body>
+</html>

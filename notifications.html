@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Notifications</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #001f3d;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .notification-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #004080;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+        }
+
+        .notification-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            color: #333;
+        }
+
+        .notification-item p {
+            margin: 5px 0;
+        }
+
+        .close-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .back-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .back-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="notification-container">
+        <h1>Your Notifications</h1>
+        <div id="notifications-list"></div>
+        <button class="back-btn" onclick="window.location.href='home.html';">Back to Home</button>
+    </div>
+
+    <script>
+        // Firebase configuration and initialization
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Function to fetch notifications in real-time
+        async function fetchNotifications() {
+            const user = auth.currentUser;
+            if (user) {
+                const notificationsRef = db.collection("users").doc(user.uid).collection("notifications");
+                
+                // Listen for real-time updates
+                notificationsRef.orderBy("timestamp", "desc").onSnapshot(snapshot => {
+                    const notificationsList = document.getElementById("notifications-list");
+                    notificationsList.innerHTML = ""; // Clear the previous notifications
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const notificationItem = document.createElement("div");
+                        notificationItem.classList.add("notification-item");
+
+                        notificationItem.innerHTML = `
+                            <p><strong>${data.senderName}:</strong> ${data.message}</p>
+                            <small>${new Date(data.timestamp.seconds * 1000).toLocaleString()}</small>
+                        `;
+
+                        notificationsList.appendChild(notificationItem);
+                    });
+                });
+            } else {
+                alert("Please log in to view your notifications.");
+            }
+        }
+
+        // Call function to fetch notifications
+        fetchNotifications();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Text Chat</title>
+
+    <!-- Firebase Modular SDK -->
+    <script type="module">
+      // Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let chatId = null;
+let matchUserId = null;
+
+// Blacklist for inappropriate words
+const mildWords = [
+    "damn", "hell", "stupid", "idiot", "loser", "dumb", "fool",
+    "shut up", "screw you", "crap", "jerk", "lame", "moron",
+    "ugly", "lazy", "noob", "trash", "freak", "silly",
+    "annoying", "weirdo", "clown", "failure"
+];
+
+const severeWords = [
+    "racistword1", "racistword2", "extremeinsult1", "extremeinsult2", 
+    "deaththreat", "kill you", "terrorist", "bomb threat",
+    "child abuse", "self harm", "suicide encouragement",
+    "sexual assault", "rape", "genocide", "ethnic cleansing",
+    "violentthreat1", "violentthreat2", "pedophile", "grooming",
+    "hate speech1", "hate speech2"
+];
+
+// Select DOM elements
+const chatBox = document.getElementById("chat-box");
+const chatInput = document.getElementById("chat-input");
+const sendButton = document.getElementById("send-button");
+const skipButton = document.getElementById("skip-button");
+
+// Function to filter messages
+function checkForBannedWords(message, userId) {
+    const lowerMessage = message.toLowerCase();
+
+    for (let word of severeWords) {
+        if (lowerMessage.includes(word)) {
+            banUser(userId, 750);
+            return true;
+        }
+    }
+    for (let word of mildWords) {
+        if (lowerMessage.includes(word)) {
+            banUser(userId, 2);
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to ban a user
+async function banUser(userId, hours) {
+    const banExpiration = new Date();
+    banExpiration.setHours(banExpiration.getHours() + hours);
+
+    await updateDoc(doc(db, "users", userId), {
+        isBanned: true,
+        banExpires: banExpiration.toISOString()
+    });
+
+    alert(`You have been banned for ${hours} hours.`);
+}
+
+// Function to check if user is banned
+async function checkBanStatus(userId) {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists() && userSnap.data().isBanned) {
+        const banExpires = new Date(userSnap.data().banExpires);
+        const now = new Date();
+        if (now < banExpires) {
+            alert(`You are banned until ${banExpires.toLocaleString()}.`);
+            return true;
+        } else {
+            await updateDoc(userRef, { isBanned: false });
+        }
+    }
+    return false;
+}
+
+// Function to find a match
+async function findMatch() {
+    const user = auth.currentUser;
+    if (!user || await checkBanStatus(user.uid)) return;
+
+    const availableUsersQuery = query(collection(db, "users"), where("isAvailable", "==", true), where("uid", "!=", user.uid));
+    const availableUsers = await getDocs(availableUsersQuery);
+
+    if (!availableUsers.empty) {
+        const match = availableUsers.docs[0];
+        matchUserId = match.id;
+
+        chatId = doc(collection(db, "chats")).id;
+
+        // Set both users as unavailable
+        await updateDoc(doc(db, "users", user.uid), { isAvailable: false });
+        await updateDoc(doc(db, "users", matchUserId), { isAvailable: false });
+
+        console.log("Matched with:", match.data().name);
+        listenForMessages();
+    } else {
+        await setDoc(doc(db, "users", user.uid), { uid: user.uid, isAvailable: true }, { merge: true });
+        console.log("Waiting for a match...");
+    }
+}
+
+// Function to listen for incoming messages
+function listenForMessages() {
+    if (!chatId) return;
+
+    onSnapshot(doc(db, "chats", chatId), (snapshot) => {
+        if (snapshot.exists()) {
+            const message = snapshot.data().tempMessage;
+            if (message) {
+                displayMessage(message.text, message.sender === auth.currentUser.uid ? "sent" : "received");
+            }
+        }
+    });
+}
+
+// Function to display messages
+function displayMessage(text, type) {
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", type);
+    messageDiv.textContent = text;
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Send a message (not permanently saved)
+sendButton.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const messageText = chatInput.value.trim();
+    if (!messageText || !chatId) return;
+
+    if (checkForBannedWords(messageText, user.uid)) {
+        chatInput.value = "";
+        return;
+    }
+
+    displayMessage(messageText, "sent");
+
+    await setDoc(doc(db, "chats", chatId), {
+        tempMessage: {
+            sender: user.uid,
+            text: messageText,
+            timestamp: serverTimestamp()
+        }
+    });
+
+    chatInput.value = "";
+});
+
+// Skip user and find a new match
+skipButton.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    if (chatId) {
+        await deleteDoc(doc(db, "chats", chatId));
+    }
+    await updateDoc(doc(db, "users", user.uid), { isAvailable: true });
+    findMatch();
+});
+
+// Monitor authentication state
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        findMatch();
+    }
+});
+    </script>
+
+    <style>
+       * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #000428, #004e92); /* Black to Blue Gradient */
+    color: white;
+}
+
+#chat-container {
+    width: 90%;
+    max-width: 500px;
+    background: rgba(0, 0, 0, 0.7); /* Slight transparency */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+#user-details {
+    display: flex;
+    align-items: center;
+}
+
+#user-name {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+#chat-box {
+    height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.sent {
+    align-self: flex-end;
+    background: #004e92; /* Blue */
+}
+
+.received {
+    align-self: flex-start;
+    background: #222; /* Dark Gray */
+}
+
+#chat-input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    margin-top: 10px;
+}
+
+#send-button, #skip-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #004e92; /* Blue */
+    color: white;
+    cursor: pointer;
+}
+
+#send-button:hover, #skip-button:hover {
+    background: #002f6c; /* Darker Blue */
+}
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Random Text Chat</h1>
+    <div id="chat-container">
+        <div id="header">
+            <div id="user-details">
+                <div id="user-name">User Name</div>
+                <div id="user-gender">Male</div>
+                <img id="user-flag" src="" alt="Country Flag" />
+                <div id="user-age">25</div>
+            </div>
+            <button id="report-button">Report</button>
+        </div>
+        <div id="chat-box"></div>
+        <div id="loading-indicator" style="text-align: center; display: none;">Searching for a match...</div>
+        <div class="typing-indicator" id="typing-indicator" style="display: none;">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+        <input type="text" id="chat-input" placeholder="Type a message...">
+        <button id="send-button">Send</button>
+    </div>
+    <button id="skip-button">Skip</button>
+</body>
+</html>

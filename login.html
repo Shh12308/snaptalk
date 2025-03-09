@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snaptalk - Login</title>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // ✅ Import Firebase (Modular Syntax)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js"; // Firestore import
+
+        // ✅ Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+            authDomain: "snaptalk-17f6d.firebaseapp.com",
+            projectId: "snaptalk-17f6d",
+            storageBucket: "snaptalk-17f6d.appspot.com",
+            messagingSenderId: "592763376854",
+            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+            measurementId: "G-BJ36XXEJQ3"
+        };
+
+        // ✅ Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const errorMessage = document.getElementById("error-message");
+
+            // ✅ Handle Email & Password Login
+            document.getElementById("login-form").addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                let email = document.getElementById("email").value.trim();
+                let password = document.getElementById("password").value.trim();
+                errorMessage.textContent = "";
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Check if the user is banned
+                    const userRef = doc(db, "users", user.uid);
+                    const userDoc = await getDoc(userRef);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        if (userData.banned) {
+                            errorMessage.textContent = "Your account is banned. Please contact support.";
+                            return;
+                        }
+                    }
+
+                    alert("Login successful! Redirecting...");
+                    window.location.href = "chat.html"; // ✅ Redirect to Chat Page
+
+                } catch (error) {
+                    errorMessage.textContent = getFriendlyError(error.code);
+                }
+            });
+
+            // ✅ Handle Google Sign-In (Auto-check for redirect result)
+            try {
+                const result = await getRedirectResult(auth);
+                if (result?.user) {
+                    alert("Google Sign-In successful! Redirecting...");
+                    window.location.href = "chat.html";
+                }
+            } catch (error) {
+                errorMessage.textContent = getFriendlyError(error.code);
+            }
+
+            // ✅ Handle Google Sign-In Button (Popup for Desktop, Redirect for Mobile)
+            document.getElementById("google-signin").addEventListener("click", async () => {
+                try {
+                    if (window.innerWidth <= 768) {
+                        // ✅ Use Redirect for Mobile
+                        signInWithRedirect(auth, provider);
+                    } else {
+                        // ✅ Use Popup for Desktop
+                        await signInWithPopup(auth, provider);
+                        alert("Google Sign-In successful! Redirecting...");
+                        window.location.href = "chat.html";
+                    }
+                } catch (error) {
+                    errorMessage.textContent = getFriendlyError(error.code);
+                }
+            });
+
+            // ✅ Friendly Firebase Error Messages
+            function getFriendlyError(code) {
+                const errors = {
+                    "auth/user-not-found": "No account found with this email.",
+                    "auth/wrong-password": "Incorrect password. Try again.",
+                    "auth/invalid-email": "Please enter a valid email.",
+                    "auth/popup-closed-by-user": "Popup closed before sign-in.",
+                    "auth/cancelled-popup-request": "Multiple popups blocked.",
+                    "auth/network-request-failed": "Check your internet connection.",
+                    "auth/popup-blocked": "Popup blocked! Try enabling popups in browser settings.",
+                    "auth/account-exists-with-different-credential": "Email already linked to another account.",
+                    "auth/too-many-requests": "Too many attempts. Try again later.",
+                };
+                return errors[code] || "Login failed. Try again.";
+            }
+        });
+    </script>
+
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #00ffcc;
+        }
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+        }
+        h1 { color: #00ffcc; }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background: #1b1b2f;
+            color: #00ffcc;
+            font-size: 16px;
+        }
+        input { border: 1px solid #00ffcc; }
+        button {
+            background-color: #00ffcc;
+            color: #1b1b2f;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { background-color: #00d4ff; }
+        .error { color: #ff4d4d; font-size: 14px; }
+        .google-btn {
+            background-color: #db4437;
+            color: white;
+            font-weight: bold;
+        }
+        .google-btn:hover { background-color: #c1351d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Snaptalk Login</h1>
+        
+        <!-- Login Form -->
+        <form id="login-form">
+            <input type="email" id="email" placeholder="Enter Email" required>
+            <input type="password" id="password" placeholder="Enter Password" required>
+            <button type="submit">Login</button>
+        </form>
+
+        <!-- Google Sign In Button -->
+        <button class="google-btn" id="google-signin">Login with Google</button>
+
+        <a href="index.html">sign up</a>
+
+        <div id="error-message" class="error"></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+ /* General Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: black; overflow: hidden; }
+
+        .chat-container { display: flex; flex-direction: column; width: 100%; height: 100vh; position: relative; }
+        .video-call { display: flex; flex-direction: column; width: 100%; height: 100vh; position: relative; }
+        
+        .video-container { display: flex; flex-direction: column; width: 100%; height: 80vh; overflow: hidden; position: relative; justify-content: center; align-items: center; }
+        video { width: 90%; height: 48%; object-fit: cover; transition: transform 0.3s ease-in-out; }
+        
+        .controls { position: absolute; bottom: 80px; width: 100%; display: flex; justify-content: center; gap: 20px; }
+        .controls button { padding: 12px 25px; font-size: 20px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; color: white; background: transparent; opacity: 0.6; }
+        .controls button:hover { background: rgba(0, 0, 255, 0.5); opacity: 1; }
+        
+        /* User Info and Preferences */
+        .user-info { position: absolute; top: 20px; left: 10px; display: flex; flex-direction: column; align-items: center; color: white; }
+        .user-info img { width: 40px; height: 40px; border-radius: 50%; margin-bottom: 10px; }
+        .user-info span { font-size: 16px; font-weight: bold; }
+        
+        #settings-toggle { position: absolute; top: 20px; right: 10px; cursor: pointer; font-size: 14px; color: #00f; }
+        
+        #settings {
+            display: none;  /* Initially hidden */
+            position: absolute;
+            top: 0;
+            right: -250px;  /* Hidden out of view on the right side */
+            background-color: #333;
+            width: 250px;
+            height: 100%;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .settings select, .settings input { margin-bottom: 10px; padding: 5px; background-color: #555; border: none; border-radius: 5px; color: white; width: 100%; }
+
+        #chat-box {
+            background-color: #333;
+            width: 100%;
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 10px;
+            color: white;
+            border-radius: 10px;
+        }
+
+        #chat-input {
+            padding: 10px;
+            width: 100%;
+            margin-top: 10px;
+            border: none;
+            border-radius: 10px;
+            background-color: #555;
+            color: white;
+        }
+
+        /* Report Modal */
+        #report-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            width: 300px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #555;
+            color: white;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .modal-content button {
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #d32f2f;
+        }

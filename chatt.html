@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat - Snaptalk</title>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+    <!-- jsrsasign for RSA Encryption -->
+    <script src="https://cdn.rawgit.com/kjur/jsrsasign/8.0.12/jsrsasign-all-min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #1e1e1e;
+            color: white;
+        }
+
+        .chat-header {
+            background: #4b0082;
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .opposite-user-info {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #333;
+            margin: 10px;
+            border-radius: 10px;
+        }
+
+        .opposite-user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .opposite-user-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+
+        #messages-box {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sent { background: #007aff; align-self: flex-end; }
+        .received { background: #333; align-self: flex-start; }
+
+        .username {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #bbb;
+            margin-top: 3px;
+            align-self: flex-end;
+        }
+
+        #typing-indicator {
+            font-size: 14px;
+            color: #aaa;
+            padding-left: 15px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background: #222;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            background: #333;
+            color: white;
+            border-radius: 5px;
+        }
+
+        #send-message {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin-left: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #send-message:hover { background: #005ecb; }
+
+    </style>
+</head>
+<body>
+
+    <div class="chat-header" id="chat-title">Secure Chat</div>
+
+    <!-- Opposite User Info Section -->
+    <div class="opposite-user-info">
+        <img src="default-avatar.png" id="opposite-user-avatar" class="opposite-user-avatar" alt="Avatar">
+        <span id="opposite-user-name" class="opposite-user-name">User's Name</span>
+    </div>
+
+    <div id="messages-box"></div>
+    <div id="typing-indicator"></div>
+
+    <div class="chat-input">
+        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+        <button id="send-message">Send</button>
+    </div>
+
+    <!-- Firebase Authentication UI -->
+
+    <script>
+        // Firebase Setup
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let privateKey = null;
+        let publicKey = null;
+        let recipientId = "receiver_user_id"; 
+
+        // RSA Key Pair Generation
+        function generateRSAKeys() {
+            const rsa = new RSAKey();
+            rsa.generate(2048, '10001');  // Generates 2048-bit RSA key pair
+            privateKey = rsa;
+            publicKey = rsa.getPublicString();
+        }
+
+        // Save RSA public key to Firebase (for user)
+        const savePublicKey = async () => {
+            const user = auth.currentUser;
+            if (user && publicKey) {
+                await db.collection('users').doc(user.uid).update({
+                    publicKey: publicKey
+                });
+            }
+        };
+
+        const fetchProfile = async (userId) => {
+            const doc = await db.collection("users").doc(userId).get();
+            if (doc.exists) {
+                const userData = doc.data();
+                document.getElementById("opposite-user-name").textContent = userData.username;
+                document.getElementById("opposite-user-avatar").src = userData.avatarUrl || "default-avatar.png";
+            }
+        };
+
+        const getPublicKey = async (userId) => {
+            const doc = await db.collection("users").doc(userId).get();
+            if (doc.exists) {
+                publicKey = doc.data().publicKey;
+            }
+        };
+
+        // Encrypt the message using the recipient's public key
+        const encryptMessage = (message) => {
+            if (!publicKey) {
+                console.error("Public key not found.");
+                return null;
+            }
+            const encryptedMessage = new RSAKey();
+            encryptedMessage.readPublicKey(publicKey);
+            return encryptedMessage.encrypt(message);
+        };
+
+        // Decrypt the message using the private key
+        const decryptMessage = (encryptedMessage) => {
+            if (!privateKey) {
+                console.error("Private key not found.");
+                return null;
+            }
+            return privateKey.decrypt(encryptedMessage);
+        };
+
+        document.getElementById("send-message").addEventListener("click", async () => {
+            const message = document.getElementById("message-input").value;
+            if (message.trim() === "") return;
+
+            const encryptedMessage = encryptMessage(message);
+            await db.collection("chats").add({
+                message: encryptedMessage,
+                sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+                senderId: auth.currentUser.uid,
+                receiverId: recipientId
+            });
+
+            const messageBox = document.getElementById("messages-box");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", "sent");
+            messageElement.innerHTML = `<div class="username">You</div><div class="timestamp">${new Date().toLocaleString()}</div><div class="message-text">${encryptedMessage}</div>`;
+            messageBox.appendChild(messageElement);
+
+            document.getElementById("message-input").value = "";
+        });
+
+        const loadMessages = async () => {
+            const chatSnapshot = await db.collection("chats").orderBy("sentAt").get();
+            chatSnapshot.forEach(doc => {
+                const encryptedMessage = doc.data().message;
+                const decryptedMessage = decryptMessage(encryptedMessage);
+                const messageBox = document.getElementById("messages-box");
+                const messageElement = document.createElement("div");
+                messageElement.classList.add("message", "received");
+                messageElement.innerHTML = `<div class="username">User</div><div class="timestamp">${new Date(doc.data().sentAt.seconds * 1000).toLocaleString()}</div><div class="message-text">${decryptedMessage}</div>`;
+                messageBox.appendChild(messageElement);
+            });
+        };
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                generateRSAKeys();  // Generate RSA keys for the user
+                await fetchProfile(recipientId);
+                await getPublicKey(recipientId);
+                loadMessages();
+            }
+        });
+
+    </script>
+</body>
+</html>

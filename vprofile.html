@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snaptalk - Profile View</title>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+            authDomain: "snaptalk-17f6d.firebaseapp.com",
+            projectId: "snaptalk-17f6d",
+            storageBucket: "snaptalk-17f6d.appspot.com",
+            messagingSenderId: "592763376854",
+            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+            measurementId: "G-BJ36XXEJQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore();
+        const storage = getStorage();
+
+        // Get user ID from URL query parameter (e.g., ?userId=xyz)
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId'); // userId passed in the URL
+
+        if (userId) {
+            const userDocRef = doc(db, "users", userId);
+
+            // Real-time listener for profile updates
+            onSnapshot(userDocRef, async (userDoc) => {
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+
+                    // Set Display Name
+                    document.getElementById("display-name").innerText = userData.displayName || "No Name";
+
+                    // Set Gender
+                    document.getElementById("gender").innerText = userData.gender || "Not specified";
+
+                    // Set Bio
+                    document.getElementById("bio").innerText = userData.bio || "No Bio";
+
+                    // Set Country
+                    document.getElementById("country").innerText = userData.country || "Unknown";
+
+                    // Set Profile Picture (Load from Firebase Storage)
+                    const profilePicRef = ref(storage, `profile_pics/${userId}.jpg`);
+                    try {
+                        const profilePicURL = await getDownloadURL(profilePicRef);
+                        document.getElementById("profile-pic").src = profilePicURL;
+                    } catch (error) {
+                        console.log("No profile picture found, using default avatar.");
+                        document.getElementById("profile-pic").src = "default-avatar.png"; // Default Avatar
+                    }
+                } else {
+                    console.log("User not found.");
+                }
+            });
+
+        } else {
+            alert("No user ID provided.");
+        }
+    </script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+        body {
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ffdde1);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        h1 { color: #333; font-size: 28px; margin-bottom: 20px; }
+
+        .profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px solid #ff9a9e;
+            object-fit: cover;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .profile-info {
+            text-align: left;
+            margin-top: 30px;
+        }
+
+        .profile-info label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            color: #444;
+        }
+
+        .profile-info p {
+            margin-top: 5px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>View Profile</h1>
+        
+        <div class="profile-container">
+            <h2 id="display-name">Loading...</h2>
+            <img src="default-avatar.png" id="profile-pic" class="profile-pic" alt="Profile Picture">
+        </div>
+
+        <div class="profile-info">
+            <label>Gender:</label>
+            <p id="gender">Loading...</p>
+
+            <label>Bio:</label>
+            <p id="bio">Loading...</p>
+
+            <label>Country:</label>
+            <p id="country">Loading...</p>
+        </div>
+    </div>
+</body>
+</html>
