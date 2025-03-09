@@ -57,7 +57,7 @@
                     }
 
                     alert("Login successful! Redirecting...");
-                    window.location.href = "chat.html"; // ✅ Redirect to Chat Page
+                    window.location.href = "home.html"; // ✅ Redirect to Chat Page
 
                 } catch (error) {
                     errorMessage.textContent = getFriendlyError(error.code);
@@ -85,7 +85,7 @@
                         // ✅ Use Popup for Desktop
                         await signInWithPopup(auth, provider);
                         alert("Google Sign-In successful! Redirecting...");
-                        window.location.href = "chat.html";
+                        window.location.href = "home.html";
                     }
                 } catch (error) {
                     errorMessage.textContent = getFriendlyError(error.code);
@@ -170,7 +170,9 @@
         </form>
 
         <!-- Google Sign In Button -->
-        <button class="google-btn" id="google-signin">Login with Google</button>
+     
+
+
 
         <a href="index.html">sign up</a>
 
