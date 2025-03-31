@@ -12,13 +12,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 
     <style>
-       * {
+       /* Global Reset */
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Body Styling */
 body {
     display: flex;
     flex-direction: column;
@@ -27,17 +29,15 @@ body {
     min-height: 100vh;
     background: linear-gradient(45deg, #ff8c00, #ff4081, #009688);
     background-size: 300% 300%;
-    animation: rainbowBackground 15s infinite linear;
-    padding-top: 30px;  /* Adjusted padding-top to lift the content */
+    animation: rainbowBackground 10s infinite ease-in-out;
+    padding-top: 20px;
 }
 
-/* Fun Background Animation */
+/* Background Animation */
 @keyframes rainbowBackground {
-    0% { background: linear-gradient(45deg, #ff8c00, #ff4081, #009688); }
-    25% { background: linear-gradient(45deg, #ff4081, #2196f3, #ff9800); }
-    50% { background: linear-gradient(45deg, #2196f3, #673ab7, #ff4081); }
-    75% { background: linear-gradient(45deg, #673ab7, #4caf50, #ff8c00); }
-    100% { background: linear-gradient(45deg, #ff8c00, #ff4081, #009688); }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Main Container */
@@ -45,48 +45,48 @@ body {
     text-align: center;
     color: white;
     padding: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     max-width: 450px;
     width: 90%;
-    margin-top: 20px;  /* Lifted the container a little higher */
-    margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 .container h1 {
-    font-size: 42px;
-    margin-bottom: 20px;
+    font-size: 38px;
+    margin-bottom: 15px;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
 .container p {
-    font-size: 20px;
-    margin-bottom: 20px;
+    font-size: 18px;
+    margin-bottom: 15px;
     font-weight: 400;
 }
 
+/* Button Styles */
 .btn-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .btn {
-    padding: 14px 30px;
-    font-size: 22px;
-    width: 250px;
+    padding: 12px 25px;
+    font-size: 20px;
+    width: 240px;
     cursor: pointer;
     background: linear-gradient(45deg, #ff416c, #ff4b2b);
     color: white;
     border: none;
-    border-radius: 12px;
-    transition: all 0.3s ease-in-out;
+    border-radius: 10px;
+    transition: 0.3s ease-in-out;
     text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
     text-transform: uppercase;
 }
 
@@ -96,25 +96,25 @@ body {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Footer Styles */
+/* Footer */
 footer {
     background: rgba(0, 0, 0, 0.85);
     color: white;
     text-align: center;
-    padding: 18px;
+    padding: 15px;
     position: fixed;
     bottom: 0;
     width: 100%;
     display: flex;
     justify-content: center;
-    gap: 30px;
+    gap: 20px;
     border-top: 2px solid #ff4081;
 }
 
 footer a {
     color: white;
     text-decoration: none;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     transition: color 0.3s ease-in-out;
 }
@@ -125,9 +125,9 @@ footer a:hover {
 
 footer .donate-btn {
     background: #ff4081;
-    padding: 10px 20px;
+    padding: 8px 18px;
     border-radius: 8px;
-    font-size: 18px;
+    font-size: 16px;
     text-decoration: none;
     color: white;
     transition: background 0.3s;
@@ -154,20 +154,20 @@ footer .donate-btn:hover {
 
 .modal-content {
     background: #ffffff;
-    border-radius: 15px;
-    padding: 25px;
-    max-width: 600px;
+    border-radius: 12px;
+    padding: 22px;
+    max-width: 550px;
     width: 80%;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
 .close-btn {
     background: #ff0000;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 18px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
     transition: background 0.3s;
@@ -189,28 +189,24 @@ footer .donate-btn:hover {
     }
 
     .container p {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .btn {
         font-size: 18px;
         width: 220px;
-        padding: 12px 25px;
+        padding: 10px 22px;
     }
 
     footer {
         flex-direction: column;
-        gap: 15px;
-        padding: 20px;
+        gap: 12px;
+        padding: 15px;
     }
 
     footer .donate-btn {
-        font-size: 16px;
-        padding: 12px 25px;
-    }
-
-    footer a {
-        font-size: 1px;
+        font-size: 14px;
+        padding: 10px 20px;
     }
 }
 
@@ -220,28 +216,19 @@ footer .donate-btn:hover {
     }
 
     .container p {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .btn {
         font-size: 16px;
         width: 200px;
-        padding: 10px 20px;
+        padding: 9px 18px;
     }
 
     footer {
         flex-direction: column;
         gap: 10px;
-        padding: 15px;
-    }
-
-    footer .donate-btn {
-        font-size: 14px;
-        padding: 10px 20px;
-    }
-
-    footer a {
-        font-size: 14px;
+        padding: 12px;
     }
 }
     </style>
@@ -267,7 +254,7 @@ footer .donate-btn:hover {
         <p id="user-status">Checking login status...</p>
         <p id="online-users">Online Users: 0</p>
         <div class="btn-container">
-            <button class="btn" id="text-chat"><a href="chat.html" style="color: white;">Start Video Chat</a></button>
+            <button class="btn" id="video-chat"><a href="chat.html" style="color: white;">Start Video Chat</a></button>
             <button class="btn" id="text-chat"><a href="message.html" style="color: white;">Start Text Chat</a></button>
             <button class="btn" id="disclaimer-btn">Read Disclaimer</button>
         </div>
@@ -359,7 +346,6 @@ footer .donate-btn:hover {
                 userStatus.innerText = "Not logged in. Please sign in.";
             }
         });
-
     </script>
 </body>
 </html>

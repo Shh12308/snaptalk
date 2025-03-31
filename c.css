@@ -1,0 +1,228 @@
+/* Reset and Global Styling */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: black;
+  overflow: hidden;
+}
+
+/* Chat Container Styles */
+#chat-container {
+  width: 100%;
+  max-width: 500px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Transparent Chat Box */
+#chat-box {
+  flex: 1;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.3); /* Transparent Black */
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  color: #fff; /* White Text */
+  backdrop-filter: blur(8px); /* Glassmorphic Effect */
+}
+
+/* Chat Input and Button */
+#chat-input {
+  width: calc(100% - 80px);
+  padding: 10px;
+  border: none;
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #000;
+}
+
+#send-button {
+  width: 70px;
+  padding: 10px;
+  margin-left: 5px;
+  border: none;
+  border-radius: 20px;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#send-button:hover {
+  background-color: #0056b3;
+}
+
+/* Chat Message Styling */
+.message {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 20px;
+  max-width: 80%;
+}
+
+/* User Messages */
+.user-message {
+  background-color: rgba(0, 123, 255, 0.8); /* Light Blue */
+  color: #fff;
+  align-self: flex-end;
+}
+
+/* Opponent Messages */
+.opponent-message {
+  background-color: rgba(200, 200, 200, 0.8); /* Light Gray */
+  color: #000;
+  align-self: flex-start;
+}
+
+/* Video Call Section */
+.video-call {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Video Container */
+.video-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 80vh;
+  justify-content: center;
+  align-items: center;
+}
+video {
+  width: 90%;
+  height: 48%;
+  object-fit: cover;
+  border-radius: 10px;
+  background-color: #000;
+}
+
+/* Controls Section */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+.controls button {
+  padding: 12px 25px;
+  font-size: 20px;
+  color: white;
+  background-color: #333;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.controls button:hover {
+  background-color: rgba(0, 0, 255, 0.7);
+}
+
+/* User Info Section - Vertical Layout */
+.user-info {
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  color: white;
+  display: flex;
+  flex-direction: column; 
+  gap: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* Avatar with Spacing */
+.user-info img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+/* User Info Details */
+.user-info span {
+  display: block;
+  font-size: 16px;
+}
+
+/* Settings Toggle Button */
+#settings-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #00f;
+  cursor: pointer;
+  font-size: 18px;
+  background: none;
+  border: none;
+}
+#settings-toggle:hover {
+  color: rgba(0, 0, 255, 0.7);
+}
+
+/* Settings Panel */
+#settings {
+  display: none;
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background-color: #333;
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Form Inputs and Buttons */
+#settings label {
+  display: block;
+  margin-top: 10px;
+}
+#settings input, 
+#settings select, 
+#settings button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+}
+#settings input, #settings select {
+  background-color: #444;
+  color: white;
+}
+#settings button {
+  background-color: #00f;
+  color: white;
+  cursor: pointer;
+}
+#settings button:hover {
+  background-color: rgba(0, 0, 255, 0.7);
+}
+
+/* Responsive Design for Smaller Screens */
+@media (max-width: 600px) {
+  video {
+    height: 40%;
+  }
+  #chat-input {
+    width: 95%;
+  }
+}
