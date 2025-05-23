@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Chat with Preferences</title>
-  <link rel="stylesheet" href="c.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
-  
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
-  
-  <!-- AgoraRTC SDK -->
+  <title>Video Chat</title>
+
+  <!-- Agora SDK -->
   <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
 
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Main Logic -->
+  <script type="module" src="main.js" defer></script>
 </head>
 
 <body>
@@ -29,18 +29,17 @@
 
       <!-- Opponent Info -->
       <div class="user-info" id="opponent-info">
-        <img id="opponent-avatar" src="default-avatar.png" alt="Avatar" />
-        <span id="opponent-username">Username: Loading...</span>
+        <img id="opponent-avatar" src="1C2E7234-5C18-45EC-A7A3-10414B8FB6F4.jpeg" alt="Avatar" />
         <span id="opponent-gender">Gender: Loading...</span>
         <span id="opponent-age">Age: Loading...</span>
         <span id="opponent-location">Location: Loading...</span>
       </div>
 
       <!-- Settings Toggle -->
-      <span id="settings-toggle">⚙ Settings</span>
+      <span id="settings-toggle" class="settings-toggle">⚙ Settings</span>
 
       <!-- Settings Panel -->
-      <div id="settings" style="display:none;">
+      <div id="settings" class="settings-panel hidden">
         <label for="age">Age:</label>
         <select id="age">
           <option value="13">13</option>
@@ -63,6 +62,14 @@
         <button id="saveSettings">Save Preferences</button>
       </div>
 
+      <!-- Icebreaker Selector -->
+     <select id="icebreaker-selector">
+  <option disabled selected>Select an icebreaker</option>
+  <option>What's a hobby you're passionate about?</option>
+  <option>If you could travel anywhere, where would you go?</option>
+  <option>What's your go-to comfort food?</option>
+</select>
+
       <!-- Controls -->
       <div class="controls">
         <button id="startChat"><i class="fas fa-comments"></i> Start Chat</button>
@@ -71,20 +78,18 @@
       </div>
     </div>
 
-    <!-- Chat Box Section -->
     <div class="chat-box">
-      <div id="chat-box" class="chat-box-container">
-        <!-- Chat messages will appear here -->
-      </div>
-      <div class="chat-input-container">
-        <input type="text" id="chat-input" placeholder="Type a message..." />
-        <button id="send-button"><i class="fas fa-paper-plane"></i> Send</button>
-      </div>
-    </div>
+  <div id="chat-box" class="chat-box-container">
+    <!-- Chat messages appear here -->
   </div>
+  <div class="chat-input-container">
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <button id="send-button"><i class="fas fa-paper-plane"></i> Send</button>
+  </div>
+</div>
 
-  <!-- Main Script for Video Chat -->
-  <script src="c.js"></script>
+    <!-- Report User Button -->
+    <button id="reportUser" style="display:none;">Report User</button>
+  </div>
 </body>
-
 </html>

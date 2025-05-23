@@ -1,261 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Chat</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: linear-gradient(135deg, #000428, #004e92);
-            color: white;
-        }
-        #chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.9);
-        }
-        #header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.8);
-        }
-        #chat-box {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-        }
-        .message {
-            padding: 12px; 
-            margin: 5px; 
-            border-radius: 10px; 
-            max-width: 60%;
-        }
-        .sent { align-self: flex-end; background: #004e92; }
-        .received { align-self: flex-start; background: #222; }
-        .input-container {
-            display: flex;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.8);
-        }
-        #chat-input { flex: 1; padding: 12px; border: none; border-radius: 5px; background: rgba(255, 255, 255, 0.2); color: white; }
-        #send-button, #skip-button {
-            padding: 12px;
-            margin-left: 10px;
-            border: none;
-            border-radius: 5px;
-            background: #004e92;
-            color: white;
-            cursor: pointer;
-        }
-        #send-button:hover, #skip-button:hover { background: #002f6c; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: white;
+    }
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+    }
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.8);
+    }
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      padding: 12px; 
+      margin: 5px; 
+      border-radius: 10px; 
+      max-width: 60%;
+    }
+    .sent { align-self: flex-end; background: #004e92; }
+    .received { align-self: flex-start; background: #222; }
+    .input-container {
+      display: flex;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.8);
+    }
+    #chat-input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    #send-button, #skip-button {
+      padding: 12px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #004e92;
+      color: white;
+      cursor: pointer;
+    }
+    #send-button:hover, #skip-button:hover { background: #002f6c; }
 
-        /* Loading indicator */
-        #loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            font-size: 18px;
-            color: white;
-        }
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+      color: white;
+    }
+    #typing-feedback {
+      padding: 5px 20px;
+      font-style: italic;
+    }
+    @media (max-width: 600px) {
+      #chat-box { padding: 15px; }
+      .message { font-size: 14px; max-width: 80%; }
+    }
+  </style>
 
-        /* Mobile responsiveness */
-        @media (max-width: 600px) {
-            #chat-box {
-                padding: 15px;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, getDocs, query, where, onSnapshot, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+      authDomain: "snaptalk-17f6d.firebaseapp.com",
+      projectId: "snaptalk-17f6d",
+      storageBucket: "snaptalk-17f6d.appspot.com",
+      messagingSenderId: "592763376854",
+      appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+      measurementId: "G-BJ36XXEJQ3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let chatId = null;
+    let matchUserId = null;
+    let typingTimeout = null;
+    let typingEmojis = ["⌨️", "💬", "✍️", "🗯️"];
+    let emojiIndex = 0;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await initializeUser(user);
+        findMatch();
+      } else {
+        signInAnonymously(auth).catch(console.error);
+      }
+    });
+
+    async function initializeUser(user) {
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, { uid: user.uid, isAvailable: true, isTyping: false });
+      } else {
+        await updateDoc(ref, { isAvailable: true, isTyping: false });
+      }
+    }
+
+    async function findMatch() {
+      showLoading();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const q = query(collection(db, "users"), where("isAvailable", "==", true), where("uid", "!=", user.uid));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        setTimeout(findMatch, 3000);
+        return;
+      }
+
+      matchUserId = snapshot.docs[0].id;
+      chatId = `chat_${user.uid}_${matchUserId}`;
+
+      await updateDoc(doc(db, "users", user.uid), { isAvailable: false });
+      await updateDoc(doc(db, "users", matchUserId), { isAvailable: false });
+
+      hideLoading();
+      listenForMessages();
+      listenForTyping();
+    }
+
+    function listenForMessages() {
+      if (!chatId) return;
+      const ref = doc(db, "chats", chatId);
+
+      onSnapshot(ref, (snap) => {
+        const box = document.getElementById("chat-box");
+        box.innerHTML = "";
+        if (snap.exists()) {
+          const messages = snap.data().messages || [];
+          messages.forEach(msg => {
+            const el = document.createElement("div");
+            el.classList.add("message", msg.sender === auth.currentUser.uid ? "sent" : "received");
+            el.textContent = msg.text;
+            if (msg.timestamp) {
+              const ts = new Date(msg.timestamp.seconds * 1000);
+              const timeEl = document.createElement("div");
+              timeEl.style.fontSize = "10px";
+              timeEl.style.color = "#aaa";
+              timeEl.textContent = ts.toLocaleTimeString();
+              el.appendChild(timeEl);
             }
-            .message {
-                font-size: 14px;
-                max-width: 80%;
-            }
+            box.appendChild(el);
+          });
+          box.scrollTop = box.scrollHeight;
         }
-    </style>
+      });
+    }
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, getDocs, query, where, onSnapshot, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+    async function sendMessage() {
+      if (!chatId) return;
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (text === "") return;
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-            authDomain: "snaptalk-17f6d.firebaseapp.com",
-            projectId: "snaptalk-17f6d",
-            storageBucket: "snaptalk-17f6d.appspot.com",
-            messagingSenderId: "592763376854",
-            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-            measurementId: "G-BJ36XXEJQ3"
-        };
+      const ref = doc(db, "chats", chatId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) await setDoc(ref, { messages: [] });
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+      await updateDoc(ref, {
+        messages: arrayUnion({
+          sender: auth.currentUser.uid,
+          text,
+          timestamp: serverTimestamp()
+        })
+      });
 
-        let chatId = null;
-        let matchUserId = null;
+      input.value = "";
+      await setTypingStatus(false);
+      hideSelfTyping();
+    }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                await initializeUser(user);
-                findMatch();
-            } else {
-                signInAnonymously(auth).catch(error => console.error("Sign-in failed:", error));
-            }
-        });
+    async function setTypingStatus(isTyping) {
+      const user = auth.currentUser;
+      if (user) {
+        await updateDoc(doc(db, "users", user.uid), { isTyping });
+      }
+    }
 
-        // Initialize the user document in Firestore
-        async function initializeUser(user) {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-
-            if (!userSnap.exists()) {
-                await setDoc(userRef, {
-                    uid: user.uid,
-                    isAvailable: true
-                });
-            } else {
-                await updateDoc(userRef, { isAvailable: true });
-            }
+    function listenForTyping() {
+      if (!matchUserId) return;
+      const ref = doc(db, "users", matchUserId);
+      onSnapshot(ref, (snap) => {
+        if (snap.exists() && snap.data().isTyping) {
+          showStrangerTyping();
+        } else {
+          hideStrangerTyping();
         }
+      });
+    }
 
-        // Find a random match by checking for available users
-        async function findMatch() {
-            showLoading();  // Show loading indicator
-            const user = auth.currentUser;
-            if (!user) return;
+    document.getElementById("chat-input").addEventListener("input", () => {
+      showSelfTyping();
+      setTypingStatus(true);
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        setTypingStatus(false);
+        hideSelfTyping();
+      }, 1200);
+    });
 
-            const availableUsersQuery = query(collection(db, "users"), where("isAvailable", "==", true), where("uid", "!=", user.uid));
-            const querySnapshot = await getDocs(availableUsersQuery);
+    document.getElementById("send-button").addEventListener("click", sendMessage);
+    document.getElementById("chat-input").addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
 
-            if (querySnapshot.empty) {
-                console.log("No available users found. Retrying...");
-                setTimeout(findMatch, 3000);  // Retry after 3 seconds if no match is found
-                return;
-            }
+    document.getElementById("skip-button").addEventListener("click", async () => {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        isAvailable: true,
+        isTyping: false
+      });
+      chatId = null;
+      matchUserId = null;
+      document.getElementById("chat-box").innerHTML = "";
+      hideStrangerTyping();
+      hideSelfTyping();
+      findMatch();
+    });
 
-            matchUserId = querySnapshot.docs[0].id;
-            chatId = `chat_${user.uid}_${matchUserId}`;
+    function showLoading() {
+      document.getElementById("loading").style.display = "block";
+    }
 
-            // Set both users as unavailable
-            await updateDoc(doc(db, "users", user.uid), { isAvailable: false });
-            await updateDoc(doc(db, "users", matchUserId), { isAvailable: false });
+    function hideLoading() {
+      document.getElementById("loading").style.display = "none";
+    }
 
-            hideLoading();  // Hide loading indicator once match is found
-            listenForMessages();
-        }
+    function showStrangerTyping() {
+      const el = document.getElementById("stranger-typing");
+      el.innerText = `${typingEmojis[emojiIndex % typingEmojis.length]} Stranger is typing...`;
+      el.style.display = "block";
+      emojiIndex++;
+    }
 
-        // Listen for incoming messages in real-time
-        function listenForMessages() {
-            if (!chatId) return;
+    function hideStrangerTyping() {
+      document.getElementById("stranger-typing").style.display = "none";
+    }
 
-            onSnapshot(doc(db, "chats", chatId), (snapshot) => {
-                const chatBox = document.getElementById("chat-box");
-                chatBox.innerHTML = "";
+    function showSelfTyping() {
+      document.getElementById("self-typing").style.display = "block";
+    }
 
-                if (snapshot.exists()) {
-                    const messages = snapshot.data().messages || [];
-
-                    messages.forEach((message) => {
-                        const messageElement = document.createElement("div");
-                        messageElement.classList.add("message", message.sender === auth.currentUser.uid ? "sent" : "received");
-                        messageElement.textContent = message.text;
-                        
-                        // Add timestamp
-                        if (message.timestamp) {
-                            const timestamp = new Date(message.timestamp.seconds * 1000);
-                            const timeString = timestamp.toLocaleTimeString();
-                            const timeElement = document.createElement("div");
-                            timeElement.style.fontSize = "10px";
-                            timeElement.style.color = "#aaa";
-                            timeElement.textContent = timeString;
-                            messageElement.appendChild(timeElement);
-                        }
-
-                        chatBox.appendChild(messageElement);
-                    });
-
-                    chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to the latest message
-                }
-            });
-        }
-
-        // Send a new message
-        async function sendMessage() {
-            if (!chatId) return;
-
-            const input = document.getElementById("chat-input");
-            const messageText = input.value.trim();
-
-            if (messageText === "") return;
-
-            const chatRef = doc(db, "chats", chatId);
-            const chatSnap = await getDoc(chatRef);
-
-            if (!chatSnap.exists()) {
-                await setDoc(chatRef, { messages: [] });
-            }
-
-            // Add the message to the chat
-            await updateDoc(chatRef, {
-                messages: arrayUnion({
-                    sender: auth.currentUser.uid,
-                    text: messageText,
-                    timestamp: serverTimestamp()
-                })
-            });
-
-            input.value = "";  // Clear input field
-        }
-
-        // Skip the current chat and find a new match
-        document.getElementById("skip-button").addEventListener("click", async () => {
-            await updateDoc(doc(db, "users", auth.currentUser.uid), { isAvailable: true });
-            chatId = null;
-            document.getElementById("chat-box").innerHTML = "";  // Clear chat box
-            findMatch();  // Find a new match
-        });
-
-        // Send message on button click
-        document.getElementById("send-button").addEventListener("click", sendMessage);
-
-        // Send message on Enter key press
-        document.getElementById("chat-input").addEventListener("keypress", (event) => {
-            if (event.key === "Enter") sendMessage();
-        });
-
-        // Loading indicator functions
-        function showLoading() {
-            document.getElementById("loading").style.display = "block";
-        }
-
-        function hideLoading() {
-            document.getElementById("loading").style.display = "none";
-        }
-    </script>
+    function hideSelfTyping() {
+      document.getElementById("self-typing").style.display = "none";
+    }
+  </script>
 </head>
 <body>
-    <div id="chat-container">
-        <div id="header">
-            <div>Random Chat</div>
-            <button id="skip-button">Skip</button>
-        </div>
-        <div id="loading">Searching for a match... Please wait.</div>
-        <div id="chat-box"></div>
-        <div class="input-container">
-            <input type="text" id="chat-input" placeholder="Type a message...">
-            <button id="send-button">Send</button>
-        </div>
+  <div id="chat-container">
+    <div id="header">
+      <div>Random Chat</div>
+      <button id="skip-button">Skip</button>
     </div>
+    <div id="loading">🔍 Searching for a match... Please wait.</div>
+    <div id="chat-box"></div>
+    <div id="typing-feedback">
+      <div id="stranger-typing" style="display: none;">👤 Stranger is typing...</div>
+      <div id="self-typing" style="display: none;">🧍 You’re typing...</div>
+    </div>
+    <div class="input-container">
+      <input type="text" id="chat-input" placeholder="Type a message..." />
+      <button id="send-button">Send</button>
+    </div>
+  </div>
 </body>
 </html>

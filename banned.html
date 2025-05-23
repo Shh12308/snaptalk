@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banned</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    .message {
+      font-size: 24px;
+      font-weight: bold;
+      color: red;
+    }
+    .timer {
+      font-size: 48px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    .rules {
+      font-size: 18px;
+      margin-top: 40px;
+      line-height: 1.5;
+    }
+    .highlight {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Account Banned</h1>
+  <p class="message">You have been banned due to inappropriate content (Nudity Detected).</p>
+  
+  <div class="timer" id="countdownTimer">700:00:00</div>
+  
+  <div class="rules">
+    <p>Our platform is dedicated to minors, and we strictly prohibit nudity and inappropriate behavior.</p>
+    <p>Our rules:</p>
+    <ul>
+      <li><span class="highlight">No nudity or inappropriate content.</span></li>
+      <li>We do not condone any form of abuse or harassment.</li>
+      <li>Minors (ages 13-17) are our primary users. We take the safety and wellbeing of minors very seriously.</li>
+    </ul>
+    <p>If you believe this ban was issued in error, please contact our support team.</p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-functions.js"></script>
+
+  <script>
+    const countdownTimer = document.getElementById("countdownTimer");
+
+    // Set initial banned duration (700 hours)
+    const bannedDurationInMs = 700 * 60 * 60 * 1000; // 700 hours in milliseconds
+    let remainingTime = bannedDurationInMs;
+
+    function updateTimerDisplay() {
+      const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+      const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+      // Update timer on the page
+      countdownTimer.textContent = `${padTime(hours)}:${padTime(minutes)}:${padTime(seconds)}`;
+    }
+
+    function padTime(time) {
+      return time < 10 ? `0${time}` : time;
+    }
+
+    // Countdown function
+    function startCountdown() {
+      if (remainingTime <= 0) return; // Stop when time is up
+
+      remainingTime -= 1000; // Reduce 1 second
+      updateTimerDisplay();
+
+      setTimeout(startCountdown, 1000); // Repeat every second
+    }
+
+    // Start the countdown
+    startCountdown();
+  </script>
+</body>
+</html>
