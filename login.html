@@ -51,8 +51,10 @@
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         if (userData.banned) {
-                            errorMessage.textContent = "Your account is banned. Please contact support.";
-                            return;
+    window.location.href = "banned.html";
+    return;
+}
+                           
                         }
                     }
 
@@ -69,7 +71,7 @@
                 const result = await getRedirectResult(auth);
                 if (result?.user) {
                     alert("Google Sign-In successful! Redirecting...");
-                    window.location.href = "chat.html";
+                    window.location.href = "home.html";
                 }
             } catch (error) {
                 errorMessage.textContent = getFriendlyError(error.code);
