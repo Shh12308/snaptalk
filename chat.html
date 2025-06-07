@@ -2,94 +2,869 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Video Chat App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      height: 100vh;
+      background-color: #000;
+      overflow: hidden;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
 
-  <!-- Agora SDK -->
-  <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+    #preferencesPanel {
+      background: #111;
+      padding: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #333;
+    }
+    #preferencesPanel label {
+      font-size: 0.9rem;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+    #preferencesPanel select,
+    #preferencesPanel input[type="text"] {
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+    }
+    #preferencesPanel select {
+      width: 100px;
+    }
+    #preferencesPanel input[type="text"] {
+      width: 200px;
+    }
+    #savePrefsBtn {
+      background: #0078d4;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 7px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-  <!-- FontAwesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    #countrySelector {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      max-width: 300px;
+    }
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css" />
+    .hidden { display: none; }
 
-  <!-- Main Logic -->
-  <script type="module" src="main.js" defer></script>
+    .video-call {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+    .video-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .video-slot {
+      flex: 1;
+      position: relative;
+      background: #111;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .controls {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 20px;
+      z-index: 1000;
+      transition: opacity 0.4s ease;
+    }
+    .controls button {
+      padding: 12px 25px;
+      font-size: 16px;
+      color: #fff;
+      background: rgba(0,0,0,0.4);
+      border-radius: 10px;
+      border: 1px solid #fff;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+
+    #preCallOverlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      backdrop-filter: blur(12px);
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      z-index: 9999;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.1rem;
+    }
+    #partnerPhoto {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+      margin: 15px 0;
+    }
+
+    #chatBox {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      padding: 10px;
+      font-size: 0.9rem;
+      backdrop-filter: blur(5px);
+    }
+  </style>
 </head>
-
 <body>
-  <div class="chat-container">
-    <!-- Video Call Section -->
-    <div class="video-call">
-      <div class="video-container">
-        <video id="remoteVideo" autoplay playsinline></video>
-        <video id="localVideo" autoplay muted playsinline></video>
-      </div>
 
-      <!-- Opponent Info -->
-      <div class="user-info" id="opponent-info">
-        <img id="opponent-avatar" src="1C2E7234-5C18-45EC-A7A3-10414B8FB6F4.jpeg" alt="Avatar" />
-        <span id="opponent-gender">Gender: Loading...</span>
-        <span id="opponent-age">Age: Loading...</span>
-        <span id="opponent-location">Location: Loading...</span>
-      </div>
+<!-- Preferences Panel -->
+<section id="preferencesPanel">
+  <label for="prefGender">Gender:</label>
+  <select id="prefGender">
+    <option value="">--</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+  </select>
 
-      <!-- Settings Toggle -->
-      <span id="settings-toggle" class="settings-toggle">⚙ Settings</span>
+  <label for="prefAge">Preferred Age:</label>
+  <select id="prefAge">
+    <option value="">--</option>
+    <option value="13">13</option>
+    <option value="14">14</option>
+    <option value="15">15</option>
+    <option value="16">16</option>
+    <option value="17">17</option>
+    <option value="18+">18+</option>
+  </select>
 
-      <!-- Settings Panel -->
-      <div id="settings" class="settings-panel hidden">
-        <label for="age">Age:</label>
-        <select id="age">
-          <option value="13">13</option>
-          <option value="14">14</option>
-          <option value="15">15</option>
-          <option value="16">16</option>
-          <option value="17">17</option>
-          <option value="18+">18+</option>
-        </select>
+  <label for="prefTopics">Topics:</label>
+  <input type="text" id="prefTopics" placeholder="Type interests..." />
 
-        <label for="gender">Gender:</label>
-        <select id="gender">
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-
-        <label for="location">Country:</label>
-        <select id="location"></select>
-
-        <button id="saveSettings">Save Preferences</button>
-      </div>
-
-      <!-- Icebreaker Selector -->
-     <select id="icebreaker-selector">
-  <option disabled selected>Select an icebreaker</option>
-  <option>What's a hobby you're passionate about?</option>
-  <option>If you could travel anywhere, where would you go?</option>
-  <option>What's your go-to comfort food?</option>
-</select>
-
-      <!-- Controls -->
-      <div class="controls">
-        <button id="startChat"><i class="fas fa-comments"></i> Start Chat</button>
-        <button id="stopChat" style="display:none;"><i class="fas fa-phone-slash"></i> Stop</button>
-        <button id="skipChat" style="display:none;"><i class="fas fa-forward"></i> Skip</button>
-      </div>
-    </div>
-
-    <div class="chat-box">
-  <div id="chat-box" class="chat-box-container">
-    <!-- Chat messages appear here -->
+  <div id="countrySelector">
+    <!-- Dynamically populated -->
   </div>
-  <div class="chat-input-container">
-    <input type="text" id="chat-input" placeholder="Type a message..." />
-    <button id="send-button"><i class="fas fa-paper-plane"></i> Send</button>
+
+  <button id="savePrefsBtn">Save Preferences</button>
+</section>
+
+<!-- Pre-call Overlay -->
+<div id="preCallOverlay" class="hidden">
+  <img id="partnerPhoto" src="" alt="Partner" />
+  <div id="matchInfo"></div>
+  <div id="joke" style="margin:10px 0;"></div>
+  <div>Connecting in <span id="countdown">5</span> seconds...</div>
+</div>
+
+<!-- Video Section -->
+<div class="video-container" id="videoContainer">
+  <div class="video-slot" id="remote-player"></div>
+  <div class="video-slot" id="local-player"></div>
+  <div class="controls" id="videoControls">
+    <button id="endCallBtn">End</button>
+    <button id="nextBtn">Next</button>
   </div>
 </div>
 
-    <!-- Report User Button -->
-    <button id="reportUser" style="display:none;">Report User</button>
-  </div>
+<!-- Chat Box -->
+<div id="chatBox" class="hidden"></div>
+
+<!-- Firebase & Agora SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://cdn.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+<!-- Preference and Control Scripts -->
+<script>
+// --- Firebase Config ---
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const database = firebase.database();
+
+const jokes = [
+  "Why don’t skeletons fight each other? They don’t have the guts.",
+  "I told my computer I needed a break, and it said 'No problem, I’ll crash!'",
+  "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+  "Why was the math book sad? Because it had too many problems.",
+  "What do you call fake spaghetti? An impasta!",
+  "Why did the web developer go broke? Because he used up all his cache.",
+  "Why don’t programmers like nature? It has too many bugs.",
+  "Why do Java developers wear glasses? Because they don’t C#.",
+  "What do you get when you cross a snowman and a dog? Frostbite.",
+  "Why did the scarecrow win an award? Because he was outstanding in his field.",
+  "Why do cows have hooves instead of feet? Because they lactose.",
+  "How does a penguin build its house? Igloos it together.",
+  "Why did the bicycle fall over? Because it was two-tired.",
+  "Why can’t your nose be 12 inches long? Because then it would be a foot.",
+  "What did one ocean say to the other ocean? Nothing, they just waved."
+];
+
+const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
+const BAN_DURATION_HOURS = 700;
+const BAN_DURATION_MS = BAN_DURATION_HOURS * 60 * 60 * 1000;
+
+
+const APP_ID = import.meta.env.VITE_AGORA_APP_ID; // Replace with your Agora App ID
+const SUPABASE_TOKEN_URL = import.meta.env.VITE_SUPABASE_TOKEN_URL;
+
+
+// Sightengine API credentials
+const SIGHTENGINE_API_USER = import.meta.env.VITE_SIGHTENGINE_API_USER;
+const SIGHTENGINE_API_SECRET = import.meta.env.VITE_SIGHTENGINE_API_SECRET;
+
+let agoraClient;
+let localAudioTrack;
+let localVideoTrack;
+let remoteUsers = {};
+
+let currentUserProfile = null;
+let currentChannel = null;
+let remotePartner = null;
+
+// Moderation interval handler
+let moderationInterval = null;
+
+// --- Country selector ---
+const countries = [
+  { code: "us", name: "United States", flag: "https://flagcdn.com/us.svg" },
+  { code: "gb", name: "United Kingdom", flag: "https://flagcdn.com/gb.svg" },
+  { code: "ca", name: "Canada", flag: "https://flagcdn.com/ca.svg" },
+  { code: "fr", name: "France", flag: "https://flagcdn.com/fr.svg" },
+  { code: "de", name: "Germany", flag: "https://flagcdn.com/de.svg" },
+  { code: "jp", name: "Japan", flag: "https://flagcdn.com/jp.svg" },
+  { code: "au", name: "Australia", flag: "https://flagcdn.com/au.svg" },
+  { code: "in", name: "India", flag: "https://flagcdn.com/in.svg" },
+  { code: "br", name: "Brazil", flag: "https://flagcdn.com/br.svg" },
+  { code: "za", name: "South Africa", flag: "https://flagcdn.com/za.svg" }
+];
+
+// --- Anonymous sign-in and initialization ---
+auth.signInAnonymously()
+  .then(() => {
+    const user = auth.currentUser;
+    console.log("Signed in as:", user.uid);
+
+    checkBan(user.uid).then(banned => {
+      if (banned) {
+        window.location.href = "banned.html";
+        return;
+      }
+
+      loadPreferences(user.uid).then(prefs => {
+        currentUserProfile = {
+          uid: user.uid,
+          displayName: user.uid === ADMIN_UID ? "Admin" : "Guest",
+          age: prefs.age || 22,
+          gender: prefs.gender || "Male",
+          location: prefs.location || "us",
+          topics: prefs.topics || "",
+          photoURL: "https://via.placeholder.com/100",
+          isAdmin: user.uid === ADMIN_UID
+        };
+
+        setUserProfile(currentUserProfile).then(() => {
+          loadPreferencesUI(currentUserProfile);
+          findMatch();
+        });
+      });
+    });
+  })
+  .catch(err => console.error("Auth error:", err));
+
+// --- Check if user is banned ---
+async function checkBan(uid) {
+  const snapshot = await database.ref('bannedUsers/' + uid).once('value');
+  const data = snapshot.val();
+  if (!data) return false;
+
+  const bannedAt = data.timestamp;
+  const now = Date.now();
+  if (now - bannedAt >= BAN_DURATION_MS) {
+    await database.ref('bannedUsers/' + uid).remove();
+    return false;
+  }
+  return true;
+}
+
+// --- Save user profile to DB ---
+async function setUserProfile(profile) {
+  await database.ref('users/' + profile.uid).set({
+    displayName: profile.displayName,
+    age: profile.age,
+    preferredAge: profile.preferredAge,  // New field
+    gender: profile.gender,
+    location: profile.location,
+    topics: profile.topics,
+    photoURL: profile.photoURL,
+    status: 'available',
+    timestamp: Date.now()
+  });
+}
+
+async function setUserStatus(status) {
+  if (!currentUserProfile) return;
+  await database.ref('users/' + currentUserProfile.uid + '/status').set(status);
+}
+
+// --- Load/save user preferences ---
+async function loadPreferences(uid) {
+  const snapshot = await database.ref('userPreferences/' + uid).once('value');
+  return snapshot.val() || {};
+}
+
+async function savePreferences(uid, prefs) {
+  await database.ref('userPreferences/' + uid).set(prefs);
+}
+
+// --- Load preferences UI ---
+function loadPreferencesUI(profile) {
+  const genderSelect = document.getElementById('prefGender');
+  if (genderSelect) genderSelect.value = profile.gender;
+
+  const ageInput = document.getElementById('prefAge');
+  if (ageInput) ageInput.value = profile.age;
+
+  const preferredAgeInput = document.getElementById('prefPreferredAge'); // New field
+  if (preferredAgeInput) preferredAgeInput.value = profile.preferredAge || "18"; // Default to 18 if not set
+
+  const topicsInput = document.getElementById('prefTopics');
+  if (topicsInput) topicsInput.value = profile.topics;
+
+  populateCountrySelector(profile.location);
+
+  const saveBtn = document.getElementById('savePrefsBtn');
+  if (saveBtn) {
+    saveBtn.onclick = async () => {
+      const newGender = genderSelect.value;
+      const newAge = parseInt(ageInput.value) || 22;
+      const newPreferredAge = parseInt(preferredAgeInput.value) || 18; // Get preferred age
+      const newTopics = topicsInput.value.trim();
+      const newLocation = document.getElementById('prefLocation').value || "us";
+
+      currentUserProfile.gender = newGender;
+      currentUserProfile.age = newAge;
+      currentUserProfile.preferredAge = newPreferredAge; // Save preferred age
+      currentUserProfile.topics = newTopics;
+      currentUserProfile.location = newLocation;
+
+      await savePreferences(currentUserProfile.uid, {
+        gender: newGender,
+        age: newAge,
+        preferredAge: newPreferredAge, // Save preferred age to DB
+        topics: newTopics,
+        location: newLocation
+      });
+
+      await setUserProfile(currentUserProfile);
+
+      alert("Preferences saved!");
+    };
+  }
+}
+
+// --- Country selector with flags ---
+function populateCountrySelector(selectedCode = null) {
+  const container = document.getElementById('countrySelector');
+  if (!container) return;
+  container.innerHTML = '';
+
+  countries.forEach(({ code, name, flag }) => {
+    const div = document.createElement('div');
+    div.classList.add('country-item');
+    div.dataset.code = code;
+    div.title = name;
+    if (code === selectedCode) div.classList.add('selected');
+
+    div.innerHTML = `
+      <img class="country-flag" src="${flag}" alt="${name}" />
+      <span>${name}</span>
+    `;
+
+    div.addEventListener('click', () => {
+      container.querySelectorAll('.country-item').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+      document.getElementById('prefLocation').value = code;
+    });
+
+    container.appendChild(div);
+  });
+}
+
+// --- Find a match ---
+function findMatch() {
+  setUserStatus('searching');
+  const usersRef = database.ref('users');
+
+  usersRef.orderByChild('status').equalTo('available').once('value', snapshot => {
+    const users = snapshot.val();
+    let foundMatch = false;
+
+    for (let userId in users) {
+      if (userId === currentUserProfile.uid) continue;
+      const partner = users[userId];
+
+      // Only match exact location
+      if (partner.location !== currentUserProfile.location) continue;
+
+      // Topic overlap check (basic)
+      if (currentUserProfile.topics && partner.topics) {
+        if (!partner.topics.toLowerCase().includes(currentUserProfile.topics.toLowerCase()) &&
+            !currentUserProfile.topics.toLowerCase().includes(partner.topics.toLowerCase())) {
+          continue;
+        }
+      }
+
+      const minor1 = currentUserProfile.age < 18;
+      const minor2 = partner.age < 18;
+
+      if ((minor1 && !minor2) || (!minor1 && minor2)) {
+        enableSightengineModeration();
+      } else {
+        disableSightengineModeration();
+      }
+
+      // Preferred Age Filtering (both users should match each other's preferred age)
+      const preferredAge1 = currentUserProfile.preferredAge;
+      const preferredAge2 = partner.preferredAge;
+
+      // Only match if both user and partner's age falls within each other's preferred age range
+      if ((preferredAge1 !== undefined && partner.age < preferredAge1) || (preferredAge2 !== undefined && currentUserProfile.age < preferredAge2)) {
+        continue; // Skip if ages don't match the preferred age range
+      }
+
+      foundMatch = true;
+      currentChannel = createChannelName(currentUserProfile.uid, userId);
+      remotePartner = partner;
+
+      setUserStatus('busy');
+      database.ref('users/' + userId + '/status').set('busy');
+
+      showPreCallOverlay(partner);
+      break;
+    }
+
+    if (!foundMatch) {
+      console.log("No match found. Retrying in 5 seconds...");
+      setTimeout(findMatch, 5000);
+    }
+  });
+}
+
+function createChannelName(uid1, uid2) {
+  return [uid1, uid2].sort().join('_');
+}
+
+// --- Show pre-call overlay ---
+function showPreCallOverlay(partner) {
+  const joke = jokes[Math.floor(Math.random() * jokes.length)];
+  document.getElementById('matchInfo').textContent =
+    `${partner.displayName} • ${partner.gender}, ${partner.age} • ${partner.location.toUpperCase()}`;
+  document.getElementById('joke').textContent = `"${joke}"`;
+  document.getElementById('partnerPhoto').src = partner.photoURL || 'https://via.placeholder.com/100';
+
+  document.getElementById('preCallOverlay').classList.remove('hidden');
+
+  let secondsLeft = 5;
+  document.getElementById('countdown').innerText = secondsLeft;
+
+  const countdownInterval = setInterval(() => {
+    secondsLeft--;
+    document.getElementById('countdown').innerText = secondsLeft;
+    if (secondsLeft === 0) {
+      clearInterval(countdownInterval);
+      document.getElementById('preCallOverlay').classList.add('hidden');
+      document.getElementById('chatControls').classList.remove('hidden');
+      if (currentUserProfile.isAdmin) {
+        showAdminControls();
+      }
+      startCall(currentChannel);
+    }
+  }, 1000);
+}
+
+function showAdminControls() {
+  if (document.getElementById('adminControls')) return;
+
+  const adminControls = document.createElement('div');
+  adminControls.id = "adminControls";
+  adminControls.style.position = "absolute";
+  adminControls.style.bottom = "20px";
+  adminControls.style.left = "50%";
+  adminControls.style.transform = "translateX(-50%)";
+  adminControls.style.zIndex = "1000";
+  adminControls.style.display = "flex";
+  adminControls.style.flexWrap = "wrap";
+  adminControls.style.gap = "6px";
+  adminControls.style.background = "rgba(0,0,0,0.7)";
+  adminControls.style.padding = "10px";
+  adminControls.style.borderRadius = "8px";
+  adminControls.style.color = "white";
+
+  adminControls.innerHTML = `
+    <button id="kickBtn">Kick</button>
+    <button id="banBtn">Ban</button>
+    <button id="muteAudioBtn">Mute Audio</button>
+    <button id="freezeVideoBtn">Freeze Video</button>
+    <button id="screenshotBtn">Screenshot</button>
+    <button id="flagUserBtn">Flag</button>
+    <button id="banLongBtn">Ban 7 Days</button>
+    <button id="viewInfoBtn">View Info</button>
+    <button id="panicBtn">Panic! Stop All Calls</button>
+    <button id="slowMotionBtn">Slow Motion Mode</button>
+    <button id="reverseVoiceBtn">Reverse Voices</button>
+    <button id="muteAllBtn">Mute Everyone</button>
+    <button id="swapCamsBtn">Swap Cameras</button>
+    <button id="freezeFrameBtn">Freeze Frame (Meme)</button>
+    <button id="resetBtn">Reset All Pranks</button>
+  `;
+
+  document.body.appendChild(adminControls);
+
+  document.getElementById('kickBtn').onclick = kickUser;
+  document.getElementById('banBtn').onclick = banUser;
+
+  document.getElementById('muteAudioBtn').onclick = () => {
+    const audioTrack = Object.values(remoteUsers)[0]?.audioTrack;
+    if (audioTrack) {
+      const isEnabled = audioTrack.isPlaying;
+      audioTrack.setEnabled(!isEnabled);
+      alert(`Remote audio ${isEnabled ? 'muted' : 'unmuted'}`);
+    } else {
+      alert("No remote audio track found.");
+    }
+  };
+
+  document.getElementById('freezeVideoBtn').onclick = () => {
+    const remoteVideo = document.getElementById("remote-player");
+    if (remoteVideo) {
+      remoteVideo.style.display = remoteVideo.style.display === "none" ? "block" : "none";
+    }
+  };
+
+  document.getElementById('screenshotBtn').onclick = async () => {
+    const base64 = await captureVideoFrame('remote-player');
+    if (base64) {
+      const link = document.createElement('a');
+      link.href = base64;
+      link.download = `screenshot_${Date.now()}.jpg`;
+      link.click();
+    }
+  };
+
+  document.getElementById('flagUserBtn').onclick = async () => {
+    if (!remotePartner) return;
+    await database.ref('flaggedUsers/' + remotePartner.uid).set({
+      timestamp: Date.now(),
+      flaggedBy: currentUserProfile.uid
+    });
+    alert("User flagged for review.");
+  };
+
+  document.getElementById('banLongBtn').onclick = () => {
+    if (!remotePartner) return;
+    database.ref('bannedUsers/' + remotePartner.uid).set({
+      timestamp: Date.now(),
+      duration: 7 * 24 * 60 * 60 * 1000
+    });
+    endCall();
+    remotePartner = null;
+    findMatch();
+  };
+
+  document.getElementById('viewInfoBtn').onclick = () => {
+    if (!remotePartner) return;
+    alert(JSON.stringify(remotePartner, null, 2));
+  };
+
+  // Fun prank buttons:
+
+  document.getElementById('panicBtn').onclick = () => {
+    alert("🚨 PANIC MODE ACTIVATED! 🚨 All calls will be disconnected immediately.");
+    database.ref('system/stopAllCalls').set(true);
+  };
+
+  document.getElementById('slowMotionBtn').onclick = () => {
+    alert("🦥 Slow Motion Mode Enabled! Videos will be *extra* laggy.");
+    database.ref('system/slowMotion').set(true);
+  };
+
+  document.getElementById('reverseVoiceBtn').onclick = () => {
+    alert("🔊 Voices reversed! Good luck understanding anyone.");
+    database.ref('system/reverseAudio').set(true);
+  };
+
+  document.getElementById('muteAllBtn').onclick = () => {
+    alert("🔇 Everyone is muted. Shhh!");
+    database.ref('system/muteAll').set(true);
+  };
+
+  document.getElementById('swapCamsBtn').onclick = () => {
+    alert("🎥 Camera swap engaged!");
+    // Implement swap logic on server or elsewhere
+    database.ref('system/swapCameras').set(Date.now());
+  };
+
+  document.getElementById('freezeFrameBtn').onclick = () => {
+    alert("🖼️ Everyone's video frozen to meme time!");
+    database.ref('system/freezeFrame').set("https://i.imgur.com/dQw4w9W.png"); // Meme URL
+  };
+
+  document.getElementById('resetBtn').onclick = () => {
+    alert("Resetting all prank modes to normal.");
+    database.ref('system').set({
+      stopAllCalls: false,
+      slowMotion: false,
+      reverseAudio: false,
+      muteAll: false,
+      swapCameras: false,
+      freezeFrame: null,
+    });
+  };
+}
+
+// --- Start Agora call ---
+async function startCall(channel) {
+  agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
+  agoraClient.on("user-published", async (user, mediaType) => {
+    await agoraClient.subscribe(user, mediaType);
+    if (mediaType === "video") {
+      const remoteVideoTrack = user.videoTrack;
+      const remotePlayer = document.getElementById("remote-player");
+      remotePlayer.innerHTML = "";
+      remoteVideoTrack.play(remotePlayer);
+    }
+    if (mediaType === "audio") {
+      const remoteAudioTrack = user.audioTrack;
+      remoteAudioTrack.play();
+    }
+    remoteUsers[user.uid] = user;
+  });
+
+  agoraClient.on("user-unpublished", (user, mediaType) => {
+    if (mediaType === "video") {
+      const remotePlayer = document.getElementById("remote-player");
+      remotePlayer.innerHTML = "";
+    }
+    delete remoteUsers[user.uid];
+  });
+
+  // Get token from your token server or Supabase function
+  const token = await fetchToken(channel, currentUserProfile.uid);
+
+  await agoraClient.join(APP_ID, channel, token, currentUserProfile.uid);
+
+  localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+  localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+
+  localVideoTrack.play("local-player");
+
+  await agoraClient.publish([localAudioTrack, localVideoTrack]);
+
+  // Start moderation if enabled
+  if (moderationInterval) clearInterval(moderationInterval);
+  if (shouldModerate()) startModerationLoop();
+}
+
+// --- Fetch Agora token from your Supabase function or your backend ---
+async function fetchToken(channel, uid) {
+  try {
+    const res = await fetch(`${SUPABASE_TOKEN_URL}?channel=${channel}&uid=${uid}`);
+    if (!res.ok) throw new Error("Failed to fetch token");
+    const data = await res.json();
+    return data.token || null;
+  } catch (e) {
+    console.error("Token fetch error:", e);
+    return null; // Or use null token for testing (not secure)
+  }
+}
+
+// --- End call and cleanup ---
+async function endCall() {
+  if (localAudioTrack) {
+    localAudioTrack.close();
+    localAudioTrack = null;
+  }
+  if (localVideoTrack) {
+    localVideoTrack.close();
+    localVideoTrack = null;
+  }
+  if (agoraClient) {
+    await agoraClient.leave();
+    agoraClient = null;
+  }
+  document.getElementById("local-player").innerHTML = "";
+  document.getElementById("remote-player").innerHTML = "";
+  document.getElementById("chatControls").classList.add("hidden");
+
+  setUserStatus("available");
+  if (remotePartner) {
+    database.ref('users/' + remotePartner.uid + '/status').set('available');
+  }
+  remotePartner = null;
+
+  disableSightengineModeration();
+
+  findMatch();
+}
+
+// --- Sightengine moderation ---
+
+function shouldModerate() {
+  if (!currentUserProfile || !remotePartner) return false;
+  const minor1 = currentUserProfile.age < 18;
+  const minor2 = remotePartner.age < 18;
+  return (minor1 && !minor2) || (!minor1 && minor2);
+}
+
+function enableSightengineModeration() {
+  if (moderationInterval) return; // already running
+  console.log("Moderation enabled for minors");
+
+  moderationInterval = setInterval(async () => {
+    if (!localVideoTrack) return;
+
+    try {
+      // Capture a frame from local video track
+      const frame = await captureVideoFrame("local-player");
+      if (!frame) return;
+
+      // Call Sightengine API
+      const flagged = await analyzeImageSightengine(frame);
+      if (flagged) {
+        alert("Inappropriate content detected! Ending call.");
+        kickUser();
+      }
+    } catch (err) {
+      console.error("Moderation error:", err);
+    }
+  }, 10); 
+}
+
+function disableSightengineModeration() {
+  if (moderationInterval) {
+    clearInterval(moderationInterval);
+    moderationInterval = null;
+    console.log("Moderation disabled");
+  }
+}
+
+// --- Capture video frame as base64 from a video element ID ---
+async function captureVideoFrame(videoElementId) {
+  const videoEl = document.getElementById(videoElementId);
+  if (!videoEl) return null;
+  if (videoEl.tagName.toLowerCase() !== "video") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = videoEl.videoWidth || 640;
+  canvas.height = videoEl.videoHeight || 480;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg");
+}
+
+// --- Call Sightengine API to analyze image ---
+async function analyzeImageSightengine(base64Image) {
+  try {
+    const formData = new FormData();
+    formData.append('media', base64Image);
+    formData.append('api_user', SIGHTENGINE_API_USER);
+    formData.append('api_secret', SIGHTENGINE_API_SECRET);
+    formData.append('models', 'nudity,wad,offensive');
+
+    const response = await fetch("https://api.sightengine.com/1.0/check.json", {
+      method: "POST",
+      body: formData
+    });
+    const result = await response.json();
+
+    if (result.status !== "success") {
+      console.error("Sightengine API error:", result);
+      return false;
+    }
+
+    // Flag if nudity or weapon/abuse detected with moderate or high confidence
+    const nudity = result.nudity?.raw || 0;
+    const weapon = result.weapon?.prob || 0;
+    const offensive = result.offensive?.prob || 0;
+
+    if (nudity >= 0.5 || weapon >= 0.5 || offensive >= 0.5) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error("Sightengine API call failed:", e);
+    return false;
+  }
+}
+
+// --- Button handler to end call manually ---
+const endCallBtn = document.getElementById('endCallBtn');
+if (endCallBtn) {
+  endCallBtn.onclick = () => {
+    if (confirm("Are you sure you want to end the call?")) {
+      endCall();
+    }
+  };
+}
+
+// Optional: clean up on window unload
+window.addEventListener('beforeunload', async () => {
+  await endCall();
+  setUserStatus('offline');
+});
+
+// --- Initialize country selector on load ---
+document.addEventListener('DOMContentLoaded', () => {
+  populateCountrySelector(currentUserProfile?.location || 'us');
+});  
+</script>
+
 </body>
 </html>
