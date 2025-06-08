@@ -3,166 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Omegle-style Video Chat</title>
+  <title>Video Chat App</title>
+  <link rel="stylesheet" href="chat.css" />
 
-<style>
-  /* Add inside <style> in head or external CSS */
-body {
-  margin: 0;
-  background-color: #121212;
-  color: white;
-  font-family: Arial, sans-serif;
-}
+  <!-- Agora Web SDK NG -->
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
 
-#videoContainer {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  gap: 10px;
-}
-
-.video-slot {
-  flex: 1;
-  background: black;
-}
-</style>  
-
-  <!-- Agora Web SDK -->
-  <script src="https://cdn.agora.io/sdk/release/AgoraRTC_N.js"></script>
-
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (Optional) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1>Omegle-style Video Chat</h1>
-
   <div id="videoContainer">
     <div id="remote-player" class="video-slot"></div>
     <div id="local-player" class="video-slot"></div>
+
+    <section id="preferencesPanel">
+      <label for="prefGender">Gender:</label>
+      <select id="prefGender">
+        <option value="">-- Select Gender --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <div id="prelayOverlay" style="display: none;">
+        <img id="prelayProfilePic" src="default-profile.jpg" alt="Profile" />
+        <h2 id="prelayDisplayName"></h2>
+        <p id="prelayDetails"></p>
+        <p id="prelayJoke"></p>
+        <button id="prelayContinueBtn">Continue</button>
+      </div>
+
+      <label for="prefPreferredAge">Preferred Partner Age:</label>
+      <select id="prefPreferredAge">
+        <option value="">-- Select Age --</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+        <option value="18">18+</option>
+      </select>
+
+      <label for="prefTopics">Topics:</label>
+      <input type="text" id="prefTopics" placeholder="e.g. sports, music, tech" />
+
+      <label for="prefLocation">Country:</label>
+      <select id="prefLocation">
+        <option value="">-- Select Country --</option>
+      </select>
+
+      <button id="savePrefsBtn">Save Preferences</button>
+    </section>
+
+    <div id="initialButtons">
+      <button id="startBtn">Start</button>
+      <button id="homeBtn">Return Home</button>
+      <button id="togglePrefsBtn">Toggle Preferences</button>
+    </div>
+
+    <div id="callButtons" style="display: none;">
+      <button id="skipBtn" title="Skip">⏭️</button>
+      <button id="endCallBtn" title="End" style="color: #f33;">❌</button>
+      <button id="switchCamBtn" title="Switch Camera">🔄</button>
+      <button id="toggleCamBtn" title="Toggle Camera">🎥</button>
+    </div>
   </div>
 
-  <section id="preferencesPanel">
-    <label for="prefGender">Gender:</label>
-    <select id="prefGender">
-      <option value="">-- Any --</option>
-      <option value="Male">Male</option>
-      <option value="Female">Female</option>
-      <option value="Other">Other</option>
-    </select>
-
-    <label for="prefPreferredAge">Preferred Age:</label>
-    <select id="prefPreferredAge">
-      <option value="">-- Any --</option>
-      <option value="13">13</option>
-      <option value="14">14</option>
-      <option value="15">15</option>
-      <option value="16">16</option>
-      <option value="17">17</option>
-      <option value="18+">18+</option>
-    </select>
-
-    <label for="prefTopics">Topics (comma separated):</label>
-    <input type="text" id="prefTopics" placeholder="sports, music, tech" />
-
-    <label for="prefLocation">Country:</label>
-    <select id="prefLocation">
-      <option value="">-- Any --</option>
-      <option value="USA">USA</option>
-      <option value="Canada">Canada</option>
-      <option value="UK">UK</option>
-      <option value="Other">Other</option>
-    </select>
-  </section>
-
-  <button id="startBtn">Start Chat</button>
-  <button id="skipBtn" style="display:none;">Skip</button>
-  <button id="endCallBtn" style="display:none;">End Call</button>
-
-<script type="module">
-  import AgoraRTC from "https://cdn.skypack.dev/agora-rtc-sdk-ng";
-
-  // ==== CONFIG ====
-  const APP_ID = "f650f821304b4716b121c25cb662ece4"; // Your Agora App ID
+<script>
+  const APP_ID = "f650f821304b4716b121c25cb662ece4";
   const SUPABASE_TOKEN_URL = "https://hvmqgdupvpifyjtzwauf.supabase.co/functions/v1/quick-worker";
+  const SUPABASE_ANON_KEY = ""; // Replace this if not using import.meta.env
 
-  // ==== FIREBASE INIT ====
-  const firebaseConfig = {
-    // Replace with your Firebase config:
-    apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-            authDomain: "snaptalk-17f6d.firebaseapp.com",
-            projectId: "snaptalk-17f6d",
-            storageBucket: "snaptalk-17f6d.appspot.com",
-            messagingSenderId: "592763376854",
-            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-            measurementId: "G-BJ36XXEJQ3"
-        };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  // ==== GLOBALS ====
   let client;
   let localTracks = {};
-  let currentChannel = null;
-  let currentUid = null;
 
-  const MATCHMAKING_COLLECTION = "matchmakingQueue";
-
-  // ==== SIGN IN FIREBASE ANONYMOUSLY ====
-  async function signInFirebase() {
-    try {
-      await auth.signInAnonymously();
-      currentUid = auth.currentUser.uid;
-      console.log("Signed in to Firebase as UID:", currentUid);
-    } catch (e) {
-      console.error("Firebase auth error:", e);
-    }
-  }
-
-  // ==== ADD TO QUEUE ====
-  async function addToQueue(userId, prefs) {
-    await db.collection(MATCHMAKING_COLLECTION).doc(userId).set({
-      uid: userId,
-      prefs,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-
-  // ==== FIND MATCH ====
-  async function findMatch(userId, prefs) {
-    // Query 10 earliest excluding self
-    const query = db.collection(MATCHMAKING_COLLECTION)
-      .where("uid", "!=", userId)
-      .orderBy("timestamp")
-      .limit(10);
-
-    const snapshot = await query.get();
-
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-
-      // Simple prefs matching
-      if (
-        (!prefs.prefGender || data.prefs.prefGender === prefs.prefGender) &&
-        (!prefs.prefPreferredAge || data.prefs.prefPreferredAge === prefs.prefPreferredAge) &&
-        (!prefs.prefLocation || data.prefs.prefLocation === prefs.prefLocation)
-      ) {
-        return data.uid;
-      }
-    }
-    return null;
-  }
-
-  // ==== REMOVE FROM QUEUE ====
-  async function removeFromQueue(userId) {
-    await db.collection(MATCHMAKING_COLLECTION).doc(userId).delete();
-  }
-
-  // ==== START CALL ====
   async function startCall(channel, uid) {
     client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
@@ -172,20 +89,14 @@ body {
       if (mediaType === "audio") user.audioTrack.play();
     });
 
-    // Fetch Agora token from your Supabase function
-    const res = await fetch(`${SUPABASE_TOKEN_URL}?channel=${channel}&uid=${uid}`, {
+    const tokenRes = await fetch(`${SUPABASE_TOKEN_URL}?channel=${channel}&uid=${uid}`, {
       headers: {
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2bXFnZHVwdnBpZnlqdHp3YXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxOTAzOTMsImV4cCI6MjA2MDc2NjM5M30.S0i_e_TvpqwWTyE22cWDmEfmJ9yzd4j_Wg5GtHxnzd0`, // Replace with your anon key
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
     });
 
-    if (!res.ok) {
-      alert("Failed to fetch token");
-      return;
-    }
-
-    const data = await res.json();
-    const token = data.token;
+    const tokenData = await tokenRes.json();
+    const token = tokenData.token;
 
     await client.join(APP_ID, channel, token, uid);
 
@@ -194,94 +105,20 @@ body {
 
     localTracks.video.play("local-player");
     await client.publish([localTracks.audio, localTracks.video]);
-
-    // Show Skip/End buttons
-    document.getElementById("skipBtn").style.display = "inline-block";
-    document.getElementById("endCallBtn").style.display = "inline-block";
-    document.getElementById("startBtn").style.display = "none";
   }
 
-  // ==== LEAVE CALL ====
-  async function leaveCall() {
-    if (!client) return;
-    await client.leave();
-    localTracks.audio?.close();
-    localTracks.video?.close();
-    localTracks = {};
-    client = null;
-
-    document.getElementById("remote-player").innerHTML = "";
-    document.getElementById("local-player").innerHTML = "";
-
-    // Hide Skip/End, show Start
-    document.getElementById("skipBtn").style.display = "none";
-    document.getElementById("endCallBtn").style.display = "none";
-    document.getElementById("startBtn").style.display = "inline-block";
+  function generateChannel() {
+    return "channel_" + Math.floor(Math.random() * 1000000);
   }
 
-  // ==== UTILS ====
-  function generateChannel(uid1, uid2) {
-    return [uid1, uid2].sort().join("_");
-  }
-
-  // ==== MAIN ====
-  document.addEventListener("DOMContentLoaded", async () => {
-    await signInFirebase();
-
+  document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startBtn");
-    const skipBtn = document.getElementById("skipBtn");
-    const endCallBtn = document.getElementById("endCallBtn");
-
-    let currentMatchUid = null;
+    if (!startBtn) return;
 
     startBtn.addEventListener("click", async () => {
-      const prefs = {
-        prefGender: document.getElementById("prefGender").value,
-        prefPreferredAge: document.getElementById("prefPreferredAge").value,
-        prefTopics: document.getElementById("prefTopics").value,
-        prefLocation: document.getElementById("prefLocation").value,
-      };
-
-      // Add self to queue
-      await addToQueue(currentUid, prefs);
-
-      // Find match
-      const matchUid = await findMatch(currentUid, prefs);
-
-      if (!matchUid) {
-        alert("No match found. Try again later.");
-        return;
-      }
-
-      currentMatchUid = matchUid;
-
-      // Remove both from queue
-      await removeFromQueue(currentUid);
-      await removeFromQueue(matchUid);
-
-      currentChannel = generateChannel(currentUid, matchUid);
-
-      await startCall(currentChannel, currentUid);
-    });
-
-        skipBtn.addEventListener("click", async () => {
-      await leaveCall();
-
-      // Remove self from queue just in case
-      await removeFromQueue(currentUid);
-      currentChannel = null;
-      currentMatchUid = null;
-
-      // Automatically start new search
-      document.getElementById("startBtn").click();
-    });
-
-    endCallBtn.addEventListener("click", async () => {
-      await leaveCall();
-      currentChannel = null;
-      currentMatchUid = null;
-
-      // User can click Start manually again
+      const channel = generateChannel();
+      const uid = Math.floor(Math.random() * 1000000);
+      await startCall(channel, uid);
     });
   });
 </script>
