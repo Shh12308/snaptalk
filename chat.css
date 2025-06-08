@@ -1,0 +1,122 @@
+* {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body, html {
+      height: 100%;
+      width: 100%;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #videoContainer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      position: relative;
+    }
+    #remote-player, #local-player {
+      width: 100%;
+      background: #111;
+      position: relative;
+    }
+    #remote-player {
+      flex: 1;
+      border-bottom: 2px solid #333;
+    }
+    #local-player {
+      flex: 1;
+      border-top: 2px solid #333;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+    /* BUTTON AREAS */
+    #initialButtons, #callButtons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 12px 0;
+      user-select: none;
+    }
+    #initialButtons button, #callButtons button {
+      background: #0078d4;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    #initialButtons button:hover, #callButtons button:hover {
+      background-color: #005fa3;
+    }
+    #preferencesPanel {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #0078d4;
+      max-width: 90vw;
+      display: none;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: white;
+      z-index: 10;
+      font-size: 0.9rem;
+    }
+    #preferencesPanel label {
+      white-space: nowrap;
+      margin-right: 6px;
+    }
+    #preferencesPanel select,
+    #preferencesPanel input[type="text"] {
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+    }
+    #preferencesPanel select {
+      width: 100px;
+    }
+    #preferencesPanel input[type="text"] {
+      width: 200px;
+    }
+    #savePrefsBtn {
+      background: #0078d4;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 7px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      align-self: center;
+    }
+
+    /* SVG BUTTONS ICONS */
+    svg {
+      fill: white;
+      width: 20px;
+      height: 20px;
+    }
