@@ -4,213 +4,84 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Video Chat App</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-    body {
-      height: 100vh;
-      background-color: #000;
-      overflow: hidden;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #preferencesPanel {
-      background: #111;
-      padding: 15px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid #333;
-    }
-    #preferencesPanel label {
-      font-size: 0.9rem;
-      margin-right: 6px;
-      white-space: nowrap;
-    }
-    #preferencesPanel select,
-    #preferencesPanel input[type="text"] {
-      background: #222;
-      border: 1px solid #555;
-      border-radius: 6px;
-      color: white;
-      padding: 5px 10px;
-      font-size: 1rem;
-    }
-    #preferencesPanel select {
-      width: 100px;
-    }
-    #preferencesPanel input[type="text"] {
-      width: 200px;
-    }
-    #savePrefsBtn {
-      background: #0078d4;
-      border: none;
-      color: white;
-      font-weight: bold;
-      padding: 7px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #countrySelector {
-      display: flex;
-      overflow-x: auto;
-      gap: 10px;
-      max-width: 300px;
-    }
-
-    .hidden { display: none; }
-
-    .video-call {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-    }
-    .video-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    .video-slot {
-      flex: 1;
-      position: relative;
-      background: #111;
-    }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .controls {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      gap: 20px;
-      z-index: 1000;
-      transition: opacity 0.4s ease;
-    }
-    .controls button {
-      padding: 12px 25px;
-      font-size: 16px;
-      color: #fff;
-      background: rgba(0,0,0,0.4);
-      border-radius: 10px;
-      border: 1px solid #fff;
-      cursor: pointer;
-      backdrop-filter: blur(6px);
-    }
-
-    #preCallOverlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      backdrop-filter: blur(12px);
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      z-index: 9999;
-      text-align: center;
-      padding: 20px;
-      font-size: 1.1rem;
-    }
-    #partnerPhoto {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid white;
-      margin: 15px 0;
-    }
-
-    #chatBox {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      color: #fff;
-      padding: 10px;
-      font-size: 0.9rem;
-      backdrop-filter: blur(5px);
-    }
-  </style>
+  <link rel="stylesheet" href="chat.css" />
 </head>
 <body>
+  <div id="videoContainer">
+    <div id="remote-player" class="video-slot"></div>
+    <div id="local-player" class="video-slot"></div>
 
-<!-- Preferences Panel -->
-<section id="preferencesPanel">
-  <label for="prefGender">Gender:</label>
-  <select id="prefGender">
-    <option value="">--</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-  </select>
+    <!-- Preferences Panel -->
+    <section id="preferencesPanel">
+      <label for="prefGender">Gender:</label>
+      <select id="prefGender">
+        <option value="">-- Select Gender --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
 
-  <label for="prefAge">Preferred Age:</label>
-  <select id="prefAge">
-    <option value="">--</option>
-    <option value="13">13</option>
-    <option value="14">14</option>
-    <option value="15">15</option>
-    <option value="16">16</option>
-    <option value="17">17</option>
-    <option value="18+">18+</option>
-  </select>
 
-  <label for="prefTopics">Topics:</label>
-  <input type="text" id="prefTopics" placeholder="Type interests..." />
 
-  <div id="countrySelector">
-    <!-- Dynamically populated -->
-  </div>
-
-  <button id="savePrefsBtn">Save Preferences</button>
-</section>
-
-<!-- Pre-call Overlay -->
-<div id="preCallOverlay" class="hidden">
-  <img id="partnerPhoto" src="" alt="Partner" />
-  <div id="matchInfo"></div>
-  <div id="joke" style="margin:10px 0;"></div>
-  <div>Connecting in <span id="countdown">5</span> seconds...</div>
+<div id="prelayOverlay" style="display: none;">
+  <img id="prelayProfilePic" src="default-profile.jpg" alt="Profile" />
+  <h2 id="prelayDisplayName"></h2>
+  <p id="prelayDetails"></p>
+  <p id="prelayJoke"></p>
+  <button id="prelayContinueBtn">Continue</button>
 </div>
 
-<!-- Video Section -->
-<div class="video-container" id="videoContainer">
-  <div class="video-slot" id="remote-player"></div>
-  <div class="video-slot" id="local-player"></div>
-  <div class="controls" id="videoControls">
-    <button id="endCallBtn">End</button>
-    <button id="nextBtn">Next</button>
+  
+
+<label for="prefPreferredAge">Preferred Partner Age:</label>
+<select id="prefPreferredAge">
+  <option value="">-- Select Age --</option>
+  <option value="13">13</option>
+  <option value="14">14</option>
+  <option value="15">15</option>
+  <option value="16">16</option>
+  <option value="17">17</option>
+  <option value="18">18+</option>
+</select>
+
+
+      <label for="prefTopics">Topics:</label>
+      <input type="text" id="prefTopics" placeholder="e.g. sports, music, tech" />
+
+    <label for="prefLocation">Country:</label>
+<select id="prefLocation">
+  <option value="">-- Select Country --</option>
+</select>
+
+      <button id="savePrefsBtn">Save Preferences</button>
+    </section>
+
+    <!-- Initial Buttons -->
+    <div id="initialButtons">
+      <button id="startBtn">Start</button>
+      <button id="homeBtn">Return Home</button>
+      <button id="togglePrefsBtn">Toggle Preferences</button>
+    </div>
+
+    <!-- In-Call SVG Buttons -->
+    <div id="callButtons" style="display: none;">
+      <button id="skipBtn" title="Skip">
+        <svg viewBox="0 0 24 24"><path d="M16 12l-6 6v-12z"/></svg>
+      </button>
+      <button id="endCallBtn" title="End" style="color: #f33;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f33"/><path d="M15 9l-6 6M9 9l6 6" stroke="#fff" stroke-width="2"/></svg>
+      </button>
+      <button id="switchCamBtn" title="Switch Camera">
+        <svg viewBox="0 0 24 24"><path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></svg>
+      </button>
+      <button id="toggleCamBtn" title="Toggle Camera">
+        <svg id="camOnOffIcon" viewBox="0 0 24 24"><path d="M17 10.5v3l4 4v-11l-4 4zM3 7v10h10l4 4V3L13 7H3z"/></svg>
+      </button>
+    </div>
   </div>
-</div>
 
-<!-- Chat Box -->
-<div id="chatBox" class="hidden"></div>
-
-<!-- Firebase & Agora SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://cdn.agora.io/sdk/release/AgoraRTC_N.js"></script>
-
-<!-- Preference and Control Scripts -->
-<script>
+  <!-- JavaScript -->
+  <script>
 // --- Firebase Config ---
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -242,8 +113,39 @@ const jokes = [
   "How does a penguin build its house? Igloos it together.",
   "Why did the bicycle fall over? Because it was two-tired.",
   "Why can’t your nose be 12 inches long? Because then it would be a foot.",
-  "What did one ocean say to the other ocean? Nothing, they just waved."
+  "What did one ocean say to the other ocean? Nothing, they just waved.",
+  "Why did the developer go broke? Because he used up all his JSON.",
+  "What do clouds wear under their pants? Thunderwear.",
+  "I asked the dog what's two minus two. He said nothing.",
+  "Why don’t oysters donate to charity? Because they’re shellfish.",
+  "Why can’t you hear a pterodactyl go to the bathroom? Because the 'P' is silent."
 ];
+
+function showPrelay(remoteUserData) {
+  const joke = jokes[Math.floor(Math.random() * jokes.length)];
+
+  // Extract and sanitize remote user data
+  const displayName = remoteUserData?.displayName?.trim() || "Anonymous";
+  const age = remoteUserData?.age ? `${remoteUserData.age} yrs` : "Age: N/A";
+  const gender = remoteUserData?.gender || "Gender: N/A";
+  const location = remoteUserData?.location || "Location: N/A";
+  const profilePic = remoteUserData?.profilePicture || "default-profile.jpg";
+
+  // Update DOM elements
+  const profilePicEl = document.getElementById("prelayProfilePic");
+  const nameEl = document.getElementById("prelayDisplayName");
+  const detailsEl = document.getElementById("prelayDetails");
+  const jokeEl = document.getElementById("prelayJoke");
+
+  if (profilePicEl) profilePicEl.src = profilePic;
+  if (nameEl) nameEl.textContent = displayName;
+  if (detailsEl) detailsEl.textContent = `${age} • ${gender} • ${location}`;
+  if (jokeEl) jokeEl.textContent = `😂 ${joke}`;
+
+  // Show the overlay
+  const overlay = document.getElementById("prelayOverlay");
+  if (overlay) overlay.style.display = "flex";
+}
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
 const BAN_DURATION_HOURS = 700;
@@ -271,18 +173,33 @@ let remotePartner = null;
 let moderationInterval = null;
 
 // --- Country selector ---
-const countries = [
-  { code: "us", name: "United States", flag: "https://flagcdn.com/us.svg" },
-  { code: "gb", name: "United Kingdom", flag: "https://flagcdn.com/gb.svg" },
-  { code: "ca", name: "Canada", flag: "https://flagcdn.com/ca.svg" },
-  { code: "fr", name: "France", flag: "https://flagcdn.com/fr.svg" },
-  { code: "de", name: "Germany", flag: "https://flagcdn.com/de.svg" },
-  { code: "jp", name: "Japan", flag: "https://flagcdn.com/jp.svg" },
-  { code: "au", name: "Australia", flag: "https://flagcdn.com/au.svg" },
-  { code: "in", name: "India", flag: "https://flagcdn.com/in.svg" },
-  { code: "br", name: "Brazil", flag: "https://flagcdn.com/br.svg" },
-  { code: "za", name: "South Africa", flag: "https://flagcdn.com/za.svg" }
-];
+  const countries = [
+    { code: "us", name: "United States", flag: "https://flagcdn.com/us.svg" },
+    { code: "gb", name: "United Kingdom", flag: "https://flagcdn.com/gb.svg" },
+    { code: "ca", name: "Canada", flag: "https://flagcdn.com/ca.svg" },
+    { code: "fr", name: "France", flag: "https://flagcdn.com/fr.svg" },
+    { code: "de", name: "Germany", flag: "https://flagcdn.com/de.svg" },
+    { code: "jp", name: "Japan", flag: "https://flagcdn.com/jp.svg" },
+    { code: "au", name: "Australia", flag: "https://flagcdn.com/au.svg" },
+    { code: "in", name: "India", flag: "https://flagcdn.com/in.svg" },
+    { code: "br", name: "Brazil", flag: "https://flagcdn.com/br.svg" },
+    { code: "za", name: "South Africa", flag: "https://flagcdn.com/za.svg" }
+  ];
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const countrySelect = document.getElementById("prefLocation");
+
+    countries.forEach(country => {
+      const option = document.createElement("option");
+     option.value = country.name;
+      option.textContent = country.name;
+
+document.getElementById("prelayContinueBtn").addEventListener("click", () => {
+  document.getElementById("prelayOverlay").style.display = "none";
+});
+      countrySelect.appendChild(option);
+    });
+  });
 
 // --- Anonymous sign-in and initialization ---
 auth.signInAnonymously()
@@ -363,50 +280,58 @@ async function savePreferences(uid, prefs) {
 }
 
 // --- Load preferences UI ---
-function loadPreferencesUI(profile) {
+// UTIL: Load preferences from localStorage and apply to UI
+function loadPreferencesUI() {
+  const saved = JSON.parse(localStorage.getItem('chatPrefs') || '{}');
+
   const genderSelect = document.getElementById('prefGender');
-  if (genderSelect) genderSelect.value = profile.gender;
+  if (genderSelect && saved.gender) genderSelect.value = saved.gender;
 
   const ageInput = document.getElementById('prefAge');
-  if (ageInput) ageInput.value = profile.age;
+  if (ageInput && saved.age) ageInput.value = saved.age;
 
-  const preferredAgeInput = document.getElementById('prefPreferredAge'); // New field
-  if (preferredAgeInput) preferredAgeInput.value = profile.preferredAge || "18"; // Default to 18 if not set
+  const preferredAgeInput = document.getElementById('prefPreferredAge');
+  if (preferredAgeInput) preferredAgeInput.value = saved.preferredAge || "13";
 
   const topicsInput = document.getElementById('prefTopics');
-  if (topicsInput) topicsInput.value = profile.topics;
+  if (topicsInput && saved.topics) topicsInput.value = saved.topics;
 
-  populateCountrySelector(profile.location);
-
-  const saveBtn = document.getElementById('savePrefsBtn');
-  if (saveBtn) {
-    saveBtn.onclick = async () => {
-      const newGender = genderSelect.value;
-      const newAge = parseInt(ageInput.value) || 22;
-      const newPreferredAge = parseInt(preferredAgeInput.value) || 18; // Get preferred age
-      const newTopics = topicsInput.value.trim();
-      const newLocation = document.getElementById('prefLocation').value || "us";
-
-      currentUserProfile.gender = newGender;
-      currentUserProfile.age = newAge;
-      currentUserProfile.preferredAge = newPreferredAge; // Save preferred age
-      currentUserProfile.topics = newTopics;
-      currentUserProfile.location = newLocation;
-
-      await savePreferences(currentUserProfile.uid, {
-        gender: newGender,
-        age: newAge,
-        preferredAge: newPreferredAge, // Save preferred age to DB
-        topics: newTopics,
-        location: newLocation
-      });
-
-      await setUserProfile(currentUserProfile);
-
-      alert("Preferences saved!");
-    };
-  }
+  const locationInput = document.getElementById('prefLocation');
+  if (locationInput && saved.location) locationInput.value = saved.location;
 }
+
+// UTIL: Save preferences to localStorage (and optionally to server)
+function setupSavePrefsHandler() {
+  const saveBtn = document.getElementById('savePrefsBtn');
+  if (!saveBtn) return;
+
+  saveBtn.onclick = async () => {
+    const gender = document.getElementById('prefGender')?.value || '';
+    const age = parseInt(document.getElementById('prefAge')?.value) || 22;
+    const preferredAge = parseInt(document.getElementById('prefPreferredAge')?.value) || 13;
+    const topics = document.getElementById('prefTopics')?.value.trim() || '';
+    const location = document.getElementById('prefLocation')?.value || 'us';
+
+    const profile = { gender, age, preferredAge, topics, location };
+
+    // Save to localStorage
+    localStorage.setItem('chatPrefs', JSON.stringify(profile));
+
+    // Optional: save to backend if desired
+    // if (currentUserProfile?.uid) {
+    //   await savePreferences(currentUserProfile.uid, profile);
+    //   await setUserProfile({ ...currentUserProfile, ...profile });
+    // }
+
+    alert('Preferences saved!');
+  };
+}
+
+// Init on page load
+window.onload = () => {
+  loadPreferencesUI();
+  setupSavePrefsHandler();
+};
 
 // --- Country selector with flags ---
 function populateCountrySelector(selectedCode = null) {
@@ -669,8 +594,20 @@ function showAdminControls() {
 }
 
 // --- Start Agora call ---
+let agoraClient;
+let localAudioTrack;
+let localVideoTrack;
+let remoteUsers = {};
+let currentCameraId = null;
+let availableCameras = [];
+let isAudioMuted = false;
+let isVideoMuted = false;
+
+// === Start Call ===
 async function startCall(channel) {
   agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
+  setupConnectionListeners();
 
   agoraClient.on("user-published", async (user, mediaType) => {
     await agoraClient.subscribe(user, mediaType);
@@ -695,16 +632,24 @@ async function startCall(channel) {
     delete remoteUsers[user.uid];
   });
 
-  // Get token from your token server or Supabase function
+  // Get secure token
   const token = await fetchToken(channel, currentUserProfile.uid);
 
+  // Join channel
   await agoraClient.join(APP_ID, channel, token, currentUserProfile.uid);
 
-  localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-  localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+  // Get available cameras
+  availableCameras = await AgoraRTC.getCameras();
+  currentCameraId = availableCameras[0]?.deviceId;
 
+  // Create audio and video tracks
+  localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+  localVideoTrack = await AgoraRTC.createCameraVideoTrack({ cameraId: currentCameraId });
+
+  // Play local video
   localVideoTrack.play("local-player");
 
+  // Publish tracks
   await agoraClient.publish([localAudioTrack, localVideoTrack]);
 
   // Start moderation if enabled
@@ -712,7 +657,7 @@ async function startCall(channel) {
   if (shouldModerate()) startModerationLoop();
 }
 
-// --- Fetch Agora token from your Supabase function or your backend ---
+// === Fetch token ===
 async function fetchToken(channel, uid) {
   try {
     const res = await fetch(`${SUPABASE_TOKEN_URL}?channel=${channel}&uid=${uid}`);
@@ -721,11 +666,11 @@ async function fetchToken(channel, uid) {
     return data.token || null;
   } catch (e) {
     console.error("Token fetch error:", e);
-    return null; // Or use null token for testing (not secure)
+    return null;
   }
 }
 
-// --- End call and cleanup ---
+// === End call ===
 async function endCall() {
   if (localAudioTrack) {
     localAudioTrack.close();
@@ -739,6 +684,7 @@ async function endCall() {
     await agoraClient.leave();
     agoraClient = null;
   }
+
   document.getElementById("local-player").innerHTML = "";
   document.getElementById("remote-player").innerHTML = "";
   document.getElementById("chatControls").classList.add("hidden");
@@ -752,6 +698,52 @@ async function endCall() {
   disableSightengineModeration();
 
   findMatch();
+}
+
+// === Mute/unmute audio ===
+function toggleAudio() {
+  if (!localAudioTrack) return;
+  isAudioMuted = !isAudioMuted;
+  localAudioTrack.setEnabled(!isAudioMuted);
+}
+
+// === Mute/unmute video ===
+function toggleVideo() {
+  if (!localVideoTrack) return;
+  isVideoMuted = !isVideoMuted;
+  localVideoTrack.setEnabled(!isVideoMuted);
+}
+
+// === Switch camera ===
+async function switchCamera() {
+  if (!availableCameras.length || availableCameras.length < 2) return;
+  const nextIndex = (availableCameras.findIndex(cam => cam.deviceId === currentCameraId) + 1) % availableCameras.length;
+  currentCameraId = availableCameras[nextIndex].deviceId;
+
+  const newVideoTrack = await AgoraRTC.createCameraVideoTrack({ cameraId: currentCameraId });
+
+  await agoraClient.unpublish(localVideoTrack);
+  localVideoTrack.stop();
+  localVideoTrack.close();
+
+  localVideoTrack = newVideoTrack;
+  localVideoTrack.play("local-player");
+  await agoraClient.publish(localVideoTrack);
+}
+
+// === Handle reconnects ===
+function setupConnectionListeners() {
+  agoraClient.on("connection-state-change", (curState, prevState) => {
+    console.log(`Connection state changed from ${prevState} to ${curState}`);
+    if (curState === "DISCONNECTED") {
+      // Optionally alert user or try to reconnect
+    }
+  });
+
+  agoraClient.on("network-quality", (stats) => {
+    console.log("Network quality:", stats);
+    // You could show UI feedback based on stats.uplinkNetworkQuality or downlink
+  });
 }
 
 // --- Sightengine moderation ---
@@ -784,7 +776,7 @@ function enableSightengineModeration() {
     } catch (err) {
       console.error("Moderation error:", err);
     }
-  }, 10); 
+  }, 1000); 
 }
 
 function disableSightengineModeration() {
@@ -864,7 +856,8 @@ window.addEventListener('beforeunload', async () => {
 document.addEventListener('DOMContentLoaded', () => {
   populateCountrySelector(currentUserProfile?.location || 'us');
 });  
-</script>
 
+
+</script>
 </body>
 </html>

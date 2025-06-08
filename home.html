@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Snaptalk - Home</title>
 
     <!-- Google AdSense Script -->
@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 
     <style>
-       /* Global Reset */
+        /* ========== Global Reset ========== */
 * {
     margin: 0;
     padding: 0;
@@ -20,124 +20,153 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Body Styling */
+/* ========== Body Styling ========== */
 body {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     min-height: 100vh;
-    background: linear-gradient(45deg, #ff8c00, #ff4081, #009688);
-    background-size: 300% 300%;
-    animation: rainbowBackground 10s infinite ease-in-out;
+    background: linear-gradient(120deg, #4b6cb7, #182848, #2b5876);
+    background-size: 200% 200%;
+    animation: gradientShift 20s ease infinite;
     padding-top: 20px;
+    color: #f0f3f7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Background Animation */
-@keyframes rainbowBackground {
+@keyframes gradientShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-/* Main Container */
+/* ========== Main Container ========== */
 .container {
     text-align: center;
-    color: white;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: #e9f0f7cc;
+    padding: 25px 30px;
+    background: rgba(23, 32, 42, 0.85);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(43, 88, 118, 0.3);
     max-width: 450px;
     width: 90%;
-    margin-top: 10px;
+    margin-top: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .container h1 {
-    font-size: 38px;
-    margin-bottom: 15px;
-    font-weight: bold;
+    font-size: 40px;
+    margin-bottom: 18px;
+    font-weight: 800;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    text-shadow: 0 0 12px #72bcd4aa;
 }
 
 .container p {
-    font-size: 18px;
-    margin-bottom: 15px;
+    font-size: 19px;
+    margin-bottom: 20px;
     font-weight: 400;
+    text-shadow: 0 0 8px #547a9c88;
 }
 
-/* Button Styles */
+/* ========== User Age Text ========== */
+#user-age {
+    font-size: 16px;
+    font-weight: 500;
+    color: #a0c1d9cc;
+    text-shadow: 0 0 5px #517ea3bb;
+    margin-top: -12px;
+    margin-bottom: 15px;
+}
+
+/* ========== Button Styles ========== */
 .btn-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .btn {
-    padding: 12px 25px;
+    padding: 14px 28px;
     font-size: 20px;
-    width: 240px;
+    width: 250px;
     cursor: pointer;
-    background: linear-gradient(45deg, #ff416c, #ff4b2b);
-    color: white;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #e0eaff;
     border: none;
-    border-radius: 10px;
-    transition: 0.3s ease-in-out;
-    text-align: center;
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    transition: all 0.35s ease-in-out;
+    box-shadow: 0 6px 18px rgba(37, 117, 252, 0.45);
     text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    user-select: none;
 }
 
 .btn:hover {
-    background: linear-gradient(45deg, #00c6ff, #0072ff);
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #2575fc, #6a11cb);
+    transform: scale(1.07);
+    box-shadow: 0 10px 28px rgba(38, 103, 254, 0.6);
 }
 
-/* Footer */
+/* ========== Footer ========== */
 footer {
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    text-align: center;
-    padding: 15px;
+    background: rgba(23, 32, 42, 0.95);
     position: fixed;
     bottom: 0;
     width: 100%;
+    height: 15vh;
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    border-top: 2px solid #ff4081;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 2px solid #2575fc;
+    box-shadow: 0 -3px 8px rgba(37, 117, 252, 0.25);
+    z-index: 100;
+    padding: 0;
 }
 
 footer a {
-    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
-    font-size: 16px;
-    font-weight: bold;
-    transition: color 0.3s ease-in-out;
+    height: 100%;
+    flex: 1;
 }
 
-footer a:hover {
-    color: #ff4081;
+footer svg {
+    width: 22px;
+    height: 22px;
+    fill: #aac7ffcc;
+    transition: fill 0.3s ease-in-out;
 }
 
-footer .donate-btn {
-    background: #ff4081;
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-size: 16px;
-    text-decoration: none;
-    color: white;
-    transition: background 0.3s;
+footer a:hover svg {
+    fill: #72bcd4;
 }
 
-footer .donate-btn:hover {
-    background: #ff1c68;
+footer .donate-icon svg {
+    fill: #ff4d4d;
 }
 
-/* Modal Styles */
+footer .donate-icon:hover svg {
+    fill: #ff7b7b;
+}
+
+footer a span {
+    font-size: 11px;
+    color: #cdd7e0cc;
+    margin-top: 3px;
+    font-weight: 500;
+}
+
+/* ========== Modal Styles ========== */
 .modal {
     display: none;
     position: fixed;
@@ -146,89 +175,105 @@ footer .donate-btn:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(10, 14, 24, 0.85);
     justify-content: center;
     align-items: center;
     padding: 20px;
 }
 
 .modal-content {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 22px;
+    background: #202c45;
+    border-radius: 16px;
+    padding: 26px;
     max-width: 550px;
     width: 80%;
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 18px rgba(37, 117, 252, 0.3);
     text-align: center;
+    color: #c7d3f2;
 }
 
 .close-btn {
-    background: #ff0000;
+    background: #2575fc;
     color: white;
-    padding: 10px 18px;
+    padding: 12px 22px;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 16px;
     transition: background 0.3s;
+    font-weight: 700;
 }
 
 .close-btn:hover {
-    background: #d50000;
+    background: #155fcc;
 }
 
-/* Responsive Design */
+/* ========== Responsive ========== */
 @media (max-width: 768px) {
     .container {
         width: 85%;
-        padding: 15px;
+        padding: 20px;
     }
 
     .container h1 {
-        font-size: 32px;
+        font-size: 34px;
     }
 
     .container p {
-        font-size: 16px;
+        font-size: 17px;
+    }
+
+    #user-age {
+        font-size: 15px;
     }
 
     .btn {
         font-size: 18px;
         width: 220px;
-        padding: 10px 22px;
+        padding: 12px 24px;
     }
 
     footer {
         flex-direction: column;
-        gap: 12px;
-        padding: 15px;
-    }
-
-    footer .donate-btn {
-        font-size: 14px;
-        padding: 10px 20px;
+        gap: 14px;
+        padding: 12px 0;
+        height: auto;
     }
 }
 
 @media (max-width: 480px) {
     .container h1 {
-        font-size: 28px;
+        font-size: 30px;
     }
 
     .container p {
-        font-size: 15px;
+        font-size: 16px;
+    }
+
+    #user-age {
+        font-size: 14px;
     }
 
     .btn {
         font-size: 16px;
         width: 200px;
-        padding: 9px 18px;
+        padding: 10px 20px;
     }
 
     footer {
         flex-direction: column;
-        gap: 10px;
-        padding: 12px;
+        gap: 12px;
+        padding: 10px 0;
+        height: auto;
+    }
+
+    footer svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    footer a span {
+        font-size: 10px;
     }
 }
     </style>
@@ -252,10 +297,11 @@ footer .donate-btn:hover {
         <p>Connect instantly with new people. Choose between video or text chat.</p>
 
         <p id="user-status">Checking login status...</p>
+        <p id="user-age"></p>
         <p id="online-users">Online Users: 0</p>
         <div class="btn-container">
-            <button class="btn" id="video-chat"><a href="chat.html" style="color: white;">Start Video Chat</a></button>
-            <button class="btn" id="text-chat"><a href="message.html" style="color: white;">Start Text Chat</a></button>
+            <button class="btn" id="video-chat"><a href="chat.html" style="color: white; text-decoration: none;">Start Video Chat</a></button>
+            <button class="btn" id="text-chat"><a href="message.html" style="color: white; text-decoration: none;">Start Text Chat</a></button>
             <button class="btn" id="disclaimer-btn">Read Disclaimer</button>
         </div>
     </div>
@@ -272,14 +318,29 @@ footer .donate-btn:hover {
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <a href="profile.html">Profile</a>
-        <a href="mess.html">Messages</a>
-        <a href="settings.html">Settings</a>
-        <a href="contact.html">Contact</a>
-        <a href="donate.html" class="donate-btn">Donate Now</a>
-    </footer>
+        <!-- Footer -->
+   <footer class="footer-icons">
+    <a href="profile.html" title="Profile">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 12c2.7 0 4.5-1.8 4.5-4.5S14.7 3 12 3 7.5 4.8 7.5 7.5 9.3 12 12 12zm0 2c-3 0-9 1.5-9 4.5V21h18v-2.5c0-3-6-4.5-9-4.5z" />
+        </svg>
+    </a>
+    <a href="settings.html" title="Settings">
+        <svg viewBox="0 0 24 24">
+            <path d="M19.14,12.94a7.07,7.07,0,0,0,0-1.88l2.11-1.65a.5.5,0,0,0,.12-.63l-2-3.46a.5.5,0,0,0-.6-.22l-2.49,1a6.87,6.87,0,0,0-1.63-.94l-.38-2.65A.5.5,0,0,0,14,3H10a.5.5,0,0,0-.5.42L9.12,6.07a6.87,6.87,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.5.5,0,0,0,.12.63L4.86,11.06a7.07,7.07,0,0,0,0,1.88L2.75,14.59a.5.5,0,0,0-.12.63l2,3.46a.5.5,0,0,0,.6.22l2.49-1a6.87,6.87,0,0,0,1.63.94l.38,2.65A.5.5,0,0,0,10,21h4a.5.5,0,0,0,.5-.42l.38-2.65a6.87,6.87,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.5.5,0,0,0-.12-.63ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
+        </svg>
+    </a>
+    <a href="contact.html" title="Contact"> contact
+    </a>
+    <a href="donate.html" class="donate-icon" title="Donate">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.41 4.42 3 7.5 3c1.74 0 
+                3.41 1.01 4.5 2.09C13.09 4.01 14.76 3 16.5 3 
+                19.58 3 22 5.41 22 8.5c0 3.78-3.4 
+                6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+    </a>
+</footer>
 
     <script>
         // Get modal elements
@@ -287,12 +348,10 @@ footer .donate-btn:hover {
         const disclaimerBtn = document.getElementById('disclaimer-btn');
         const closeModal = document.getElementById('close-modal');
 
-        // Open modal when button clicked
         disclaimerBtn.addEventListener('click', () => {
             disclaimerModal.style.display = 'flex';
         });
 
-        // Close modal when close button is clicked
         closeModal.addEventListener('click', () => {
             disclaimerModal.style.display = 'none';
         });
@@ -302,7 +361,7 @@ footer .donate-btn:hover {
             apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
             authDomain: "snaptalk-17f6d.firebaseapp.com",
             projectId: "snaptalk-17f6d",
-            storageBucket: "snaptalk-17f6d.firebasestorage.app",
+            storageBucket: "snaptalk-17f6d.appspot.com",
             messagingSenderId: "592763376854",
             appId: "1:592763376854:web:c876f67dc5ea87080ce577",
             measurementId: "G-BJ36XXEJQ3"
@@ -312,15 +371,14 @@ footer .donate-btn:hover {
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // DOM Elements
         const userStatus = document.getElementById("user-status");
         const onlineUsersDisplay = document.getElementById("online-users");
+        const userAgeDisplay = document.getElementById("user-age");
 
-        // Firestore References
         const onlineUsersRef = db.collection("meta").doc("onlineUsers");
 
-        // Function to update online user count
-        async function updateOnlineUsers(change){
+        // Update online user count
+        async function updateOnlineUsers(change) {
             const doc = await onlineUsersRef.get();
             let onlineCount = doc.exists ? doc.data().count : 0;
 
@@ -331,19 +389,40 @@ footer .donate-btn:hover {
             }
         }
 
-        // Monitor real-time updates to online users
+        // Listen to real-time changes in user count
         onlineUsersRef.onSnapshot((doc) => {
             if (doc.exists) {
                 onlineUsersDisplay.innerText = `Online Users: ${doc.data().count}`;
             }
         });
 
-        // Auth State Listener
+        // Listen to auth state and show user info
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 userStatus.innerText = `Logged in as ${user.displayName || "User"}`;
+
+                // Fetch age from Firestore user profile
+                try {
+                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    if (userDoc.exists && userDoc.data().age) {
+                        userAgeDisplay.innerText = `Age: ${userDoc.data().age}`;
+                    } else {
+                        userAgeDisplay.innerText = `Age: Not specified`;
+                    }
+
+                    updateOnlineUsers("increase");
+
+                    // Handle cleanup on unload
+                    window.addEventListener("beforeunload", () => {
+                        updateOnlineUsers("decrease");
+                    });
+                } catch (err) {
+                    console.error("Failed to fetch user age:", err);
+                    userAgeDisplay.innerText = "Error retrieving age.";
+                }
             } else {
                 userStatus.innerText = "Not logged in. Please sign in.";
+                userAgeDisplay.innerText = "";
             }
         });
     </script>
