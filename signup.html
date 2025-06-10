@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login / Sign Up | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js"></script>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/supabase.min.js"></script>
+
+  <!-- Google reCAPTCHA -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+
+<body class="bg-gray-950 text-gray-200 flex items-center justify-center min-h-screen px-4">
+  <div class="bg-gray-900 p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+    <!-- Language Switch -->
+    <select id="languageSelect" class="mb-4 w-full bg-gray-800 text-white px-3 py-2 rounded-lg">
+      <option value="en">English</option>
+      <option value="es">Español</option>
+    </select>
+
+    <h2 id="titleText" class="text-3xl font-extrabold mb-6 text-yellow-400">Welcome to MintZa</h2>
+    <div id="status" class="text-sm mb-4 text-gray-400">Initializing...</div>
+
+    <!-- reCAPTCHA Button -->
+    <div class="mb-4">
+      <button class="g-recaptcha w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+        data-sitekey="6Lf-2VYrAAAAAHQ-tLCQfbUdZNcIE7ZkrMPiHc86"
+        data-callback="onSubmit"
+        data-action="submit"
+        id="recaptchaBtn">
+        Verify You're Human
+      </button>
+    </div>
+
+    <!-- Login Buttons (Hidden Initially) -->
+    <div id="loginButtons" class="hidden">
+      <button id="auth0LoginBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold py-3 rounded-lg transition mb-4">
+        Sign Up / Log In
+      </button>
+
+      <button id="googleBtn" class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg transition mb-4">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google" class="w-5 h-5 mr-2">
+        Continue with Google
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Language support
+    const translations = {
+      en: {
+        title: "Welcome to VidMint",
+        verify: "Verify You're Human",
+        login: "Sign Up / Log In",
+        google: "Continue with Google",
+        initializing: "Initializing...",
+      },
+      es: {
+        title: "Bienvenido a VidMint",
+        verify: "Verifica que eres humano",
+        login: "Regístrate / Inicia sesión",
+        google: "Continuar con Google",
+        initializing: "Inicializando...",
+      }
+    };
+
+    const updateLanguage = (lang) => {
+      document.getElementById("titleText").textContent = translations[lang].title;
+      document.getElementById("recaptchaBtn").textContent = translations[lang].verify;
+      document.getElementById("auth0LoginBtn").textContent = translations[lang].login;
+      document.getElementById("googleBtn").innerHTML = `<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google" class="w-5 h-5 mr-2"> ${translations[lang].google}`;
+      document.getElementById("status").textContent = translations[lang].initializing;
+    };
+
+    document.getElementById("languageSelect").addEventListener("change", (e) => {
+      updateLanguage(e.target.value);
+    });
+
+    // reCAPTCHA callback
+    function onSubmit(token) {
+      document.getElementById("loginButtons").classList.remove("hidden");
+      document.getElementById("recaptchaBtn").disabled = true;
+      document.getElementById("recaptchaBtn").classList.add("opacity-50", "cursor-not-allowed");
+    }
+
+    const auth0Config = {
+      domain: import.meta.env.VITE_AUTH0_DOMAIN,
+      clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
+      redirect_uri: window.location.origin + "/redirect.html"
+    };
+
+    const supabase = supabase.createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    );
+
+    const namespace = 'https://mintza.xyz/';
+    const statusEl = document.getElementById('status');
+    let auth0Client;
+
+    const initAuth0 = async () => {
+      try {
+        auth0Client = await createAuth0Client({
+          domain: auth0Config.domain,
+          client_id: auth0Config.clientId,
+          redirect_uri: auth0Config.redirect_uri
+        });
+
+        if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+          await auth0Client.handleRedirectCallback();
+          window.history.replaceState({}, document.title, "/");
+        }
+
+        const isAuthenticated = await auth0Client.isAuthenticated();
+
+        if (isAuthenticated) {
+          const user = await auth0Client.getUser();
+          const tokenClaims = await auth0Client.getIdTokenClaims();
+          const roles = tokenClaims[`${namespace}roles`] || [];
+
+          // Restrict @mintza.xyz
+          if (user.email.endsWith('@mintza.xyz')) {
+            alert('This domain is reserved for administrators.');
+            return;
+          }
+
+          const { error } = await supabase.from("users").upsert({
+            id: user.sub,
+            email: user.email,
+            name: user.name,
+            picture: user.picture
+          });
+
+          if (error) {
+            console.error('Supabase error:', error);
+            statusEl.textContent = 'Logged in, but failed to save user data.';
+          } else {
+            statusEl.textContent = 'Login successful!';
+          }
+
+          if (roles.includes("admin")) {
+            window.location.href = "/html";
+          } else {
+            window.location.href = "/content.html";
+          }
+        } else {
+          statusEl.textContent = 'Ready to log in.';
+        }
+
+        document.getElementById("auth0LoginBtn").onclick = async () => {
+          statusEl.textContent = 'Redirecting to Auth0...';
+          await auth0Client.loginWithRedirect({
+            authorizationParams: {
+              redirect_uri: auth0Config.redirect_uri,
+              screen_hint: "signup"
+            }
+          });
+        };
+
+        document.getElementById("googleBtn").onclick = async () => {
+          statusEl.textContent = 'Redirecting to Google login...';
+          await auth0Client.loginWithRedirect({
+            authorizationParams: {
+              redirect_uri: auth0Config.redirect_uri,
+              connection: "google-oauth2"
+            }
+          });
+        };
+
+      } catch (err) {
+        console.error('Auth0 init error:', err);
+        statusEl.textContent = 'Error initializing authentication.';
+      }
+    };
+
+    initAuth0();
+    updateLanguage("en"); // Default to English
+  </script>
+</body>
+</html>
