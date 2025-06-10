@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adult Video Chat</title>
+  <style>
+    /* All your styles preserved from your message */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    html, body {
+      height: 100%;
+      width: 100%;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+    #videoContainer {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      user-select: none;
+    }
+    #remote-player, #local-player {
+      flex: 1;
+      width: 100%;
+      background: #111;
+      position: relative;
+    }
+    #remote-player {
+      border-bottom: 2px solid #333;
+    }
+    #local-player {
+      border-top: 2px solid #333;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+    .button-bar {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 20px;
+      z-index: 10;
+    }
+    .button-bar button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      padding: 10px;
+    }
+    .button-bar svg {
+      fill: white;
+      width: 36px;
+      height: 36px;
+    }
+    .fade-in {
+      opacity: 1;
+      transition: opacity 0.4s ease-in;
+    }
+    .fade-out {
+      opacity: 0;
+      transition: opacity 0.4s ease-out;
+    }
+    #preferencesPanel {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #0078d4;
+      display: none;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: white;
+      z-index: 20;
+      font-size: 0.9rem;
+    }
+    #preferencesPanel label {
+      white-space: nowrap;
+    }
+    #preferencesPanel select,
+    #preferencesPanel input[type="text"] {
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+    }
+    #preferencesPanel select {
+      width: 100px;
+    }
+    #preferencesPanel input[type="text"] {
+      width: 200px;
+    }
+    #statusText {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1rem;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 10px;
+      border-radius: 4px;
+      z-index: 5;
+    }
+    #countdownOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 30;
+    }
+    #countdownOverlay h1 {
+      font-size: 5rem;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="videoContainer">
+    <div id="remote-player" class="video-slot"></div>
+    <div id="local-player" class="video-slot"></div>
+
+    <section id="preferencesPanel">
+      <label for="prefGender">Gender:</label>
+      <select id="prefGender">
+        <option value="">-- Select Gender --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="prefPreferredAge">Preferred Partner Age:</label>
+      <select id="prefPreferredAge">
+        <option value="">-- Select Age --</option>
+        <option value="18">18</option>
+        <option value="19">19</option>
+        <option value="20">20+</option>
+      </select>
+
+      <label for="prefTopics">Interests:</label>
+      <input type="text" id="prefTopics" placeholder="e.g. music, movies, travel" />
+
+      <label for="prefLocation">Country:</label>
+      <select id="prefLocation">
+        <option value="">-- Select Country --</option>
+      </select>
+
+      <button id="savePrefsBtn">Save Preferences</button>
+    </section>
+
+    <div class="button-bar" id="initialButtons">
+      <button id="startBtn" title="Start">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button id="togglePrefsBtn" title="Preferences">
+        <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-6a2 2 0 012 2v1.18a7.003 7.003 0 014.9 4.9H21a2 2 0 012 2v2a2 2 0 01-2 2h-1.18a7.003 7.003 0 01-4.9 4.9V22a2 2 0 01-2 2h-2a2 2 0 01-2-2v-1.18a7.003 7.003 0 01-4.9-4.9H3a2 2 0 01-2-2v-2a2 2 0 012-2h1.18a7.003 7.003 0 014.9-4.9V4a2 2 0 012-2h2z"/></svg>
+      </button>
+      <button id="homeBtn" title="Return Home">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </button>
+    </div>
+
+    <div class="button-bar fade-out" id="callButtons" style="pointer-events: none;">
+      <button id="skipBtn" title="Skip">
+        <svg viewBox="0 0 24 24"><path d="M16 12l-6 6v-12z"/></svg>
+      </button>
+      <button id="endCallBtn" title="End Call">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f33"/><path d="M15 9l-6 6M9 9l6 6" stroke="#fff" stroke-width="2"/></svg>
+      </button>
+    </div>
+
+    <div id="statusText">Not connected</div>
+    <div id="countdownOverlay"><h1 id="countdownNumber">3</h1></div>
+  </div>
+
+  <!-- Add Agora SDK -->
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+  <script type="module">
+    const startBtn = document.getElementById('startBtn');
+    const countdownOverlay = document.getElementById('countdownOverlay');
+    const countdownNumber = document.getElementById('countdownNumber');
+    const callButtons = document.getElementById('callButtons');
+    const initialButtons = document.getElementById('initialButtons');
+    const statusText = document.getElementById('statusText');
+
+    let client;
+    let localTracks;
+    let joined = false;
+
+    startBtn.onclick = () => {
+      startCountdown(async () => {
+        await joinRoom("Mintza");
+      });
+    };
+
+    function startCountdown(callback) {
+      let count = 3;
+      countdownOverlay.style.display = 'flex';
+      countdownNumber.textContent = count;
+
+      const interval = setInterval(() => {
+        count--;
+        countdownNumber.textContent = count;
+        if (count <= 0) {
+          clearInterval(interval);
+          countdownOverlay.style.display = 'none';
+          callback();
+        }
+      }, 1000);
+    }
+
+    async function joinRoom(channelName) {
+      const appId = "f650f821304b4716b121c25cb662ece4";
+      const token = "007eJxTYFj1z2Qfc5mNxIqE99nB7vMmXM/11LY6dTp6WvyJjScWuF9VYEgzMzVIszAyNDYwSTIxNzRLMjQyTDYyTU4yMzNKTU41MZntkdEQyMhgoviOkZEBAkF8NgbfzLySqkQGBgCRLh/b";
+
+      client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
+      await client.join(appId, channelName, token, null);
+      localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+      localTracks[1].play('local-player');
+
+      await client.publish(localTracks);
+
+      client.on("user-published", async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        if (mediaType === "video") {
+          user.videoTrack.play("remote-player");
+        }
+      });
+
+      joined = true;
+      statusText.textContent = "Connected to test room";
+      initialButtons.style.display = "none";
+      callButtons.style.pointerEvents = "auto";
+      callButtons.classList.remove("fade-out");
+      callButtons.classList.add("fade-in");
+    }
+  </script>
+</body>
+</html>
