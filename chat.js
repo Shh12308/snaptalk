@@ -1,5 +1,5 @@
 // === SOCKET.IO ===
-const socket = io();
+const socket = io('https://shh1-2.onrender.com');
 
 // === DOM ===
 const remoteVideo = document.getElementById('remoteVideo');
