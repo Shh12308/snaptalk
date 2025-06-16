@@ -2,262 +2,392 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Adult Video Chat</title>
+  <title>Random Video Chat</title>
   <style>
-    /* All your styles preserved from your message */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-    html, body {
-      height: 100%;
-      width: 100%;
-      background: #000;
-      color: #fff;
-      overflow: hidden;
-    }
-    #videoContainer {
-      height: 100vh;
-      width: 100vw;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      user-select: none;
-    }
-    #remote-player, #local-player {
-      flex: 1;
-      width: 100%;
-      background: #111;
-      position: relative;
-    }
-    #remote-player {
-      border-bottom: 2px solid #333;
-    }
-    #local-player {
-      border-top: 2px solid #333;
-    }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #000;
-    }
-    .button-bar {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      gap: 20px;
-      z-index: 10;
-    }
-    .button-bar button {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.3s ease;
-      padding: 10px;
-    }
-    .button-bar svg {
-      fill: white;
-      width: 36px;
-      height: 36px;
-    }
-    .fade-in {
-      opacity: 1;
-      transition: opacity 0.4s ease-in;
-    }
-    .fade-out {
-      opacity: 0;
-      transition: opacity 0.4s ease-out;
-    }
-    #preferencesPanel {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #0078d4;
-      display: none;
-      flex-wrap: wrap;
-      gap: 15px;
-      color: white;
-      z-index: 20;
-      font-size: 0.9rem;
-    }
-    #preferencesPanel label {
-      white-space: nowrap;
-    }
-    #preferencesPanel select,
-    #preferencesPanel input[type="text"] {
-      background: #222;
-      border: 1px solid #555;
-      border-radius: 6px;
-      color: white;
-      padding: 5px 10px;
-      font-size: 1rem;
-    }
-    #preferencesPanel select {
-      width: 100px;
-    }
-    #preferencesPanel input[type="text"] {
-      width: 200px;
-    }
-    #statusText {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1rem;
-      background: rgba(0,0,0,0.6);
-      padding: 4px 10px;
-      border-radius: 4px;
-      z-index: 5;
-    }
-    #countdownOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 30;
-    }
-    #countdownOverlay h1 {
-      font-size: 5rem;
-      color: #fff;
-    }
+/* === FULL CUSTOM CSS === */
+
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: #000;
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#videoContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  user-select: none;
+}
+
+/* Video Slots */
+#remote-player,
+#local-player {
+  width: 100%;
+  background: #111;
+  position: relative;
+}
+
+#remote-player {
+  flex: 1;
+  border-bottom: 2px solid #333;
+}
+
+#local-player {
+  flex: 1;
+  border-top: 2px solid #333;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+/* Button Areas */
+#initialButtons,
+#callButtons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 12px 0;
+  user-select: none;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+#initialButtons button,
+#callButtons button {
+  background: #0078d4;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#initialButtons button:hover,
+#callButtons button:hover {
+  background-color: #005fa3;
+}
+
+/* Individual Top Right Buttons */
+#blockBtn,
+#endCallBtn {
+  position: absolute;
+  top: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 20; /* above preferences panel */
+}
+
+#blockBtn {
+  right: 60px;
+}
+
+#endCallBtn {
+  right: 10px;
+}
+
+/* Preferences Panel */
+#preferencesPanel {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  padding: 15px 25px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #0078d4;
+  max-width: 90vw;
+  display: none;
+  flex-wrap: wrap;
+  gap: 15px;
+  color: white;
+  z-index: 10;
+  font-size: 0.9rem;
+}
+
+#preferencesPanel label {
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+#preferencesPanel select,
+#preferencesPanel input[type="text"] {
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: white;
+  padding: 5px 10px;
+  font-size: 1rem;
+}
+
+#preferencesPanel select {
+  width: 100px;
+}
+
+#preferencesPanel input[type="text"] {
+  width: 200px;
+}
+
+#savePrefsBtn {
+  background: #0078d4;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 7px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  align-self: center;
+}
+
+/* Chat UI */
+#chatContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 999;
+  backdrop-filter: blur(6px);
+}
+
+#chatBox {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 14px;
+  padding-right: 5px;
+}
+
+/* Typing Indicator */
+#typingIndicator {
+  font-size: 0.9rem;
+  color: #ccc;
+  font-style: italic;
+  margin-left: 5px;
+  transition: opacity 0.2s ease;
+}
+
+/* Chat Input Wrapper */
+#chatControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#chatInput {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+#chatInput::placeholder {
+  color: #ccc;
+}
+
+#sendChatBtn {
+  background-color: #00c1ff;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#sendChatBtn:hover {
+  background-color: #009ccf;
+}
+
+/* Emoji Button */
+#emojiBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: transform 0.2s ease;
+}
+
+#emojiBtn:hover {
+  transform: scale(1.2);
+}
+
+/* SVG Icon Styling */
+svg {
+  fill: white;
+  width: 20px;
+  height: 20px;
+}
+
+/* Ban Overlay */
+#banOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+#banOverlay .banned {
+  background: #111;
+  border: 2px solid #e74c3c;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 600px;
+}
+
+#banOverlay h1 {
+  color: #e74c3c;
+  margin-bottom: 20px;
+}
+
+#banOverlay .timer {
+  font-size: 1.5rem;
+  margin: 10px 0 20px;
+  color: #f1c40f;
+}
+
+#banOverlay .rules {
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+#banOverlay .rules .highlight {
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+/* Hide utility */
+.hidden {
+  display: none !important;
+}
+
+/* Ensure callButtons & chatContainer use .hidden */
+#callButtons.hidden,
+#chatContainer.hidden,
+#preferencesPanel.hidden {
+  display: none !important;
+}
+
+/* Optional: Ensure switch & toggle cam fit in callButtons style */
+#callButtons button {
+  /* already inherits base button style */
+}
   </style>
 </head>
 <body>
   <div id="videoContainer">
-    <div id="remote-player" class="video-slot"></div>
-    <div id="local-player" class="video-slot"></div>
-
-    <section id="preferencesPanel">
-      <label for="prefGender">Gender:</label>
-      <select id="prefGender">
-        <option value="">-- Select Gender --</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-      </select>
-
-      <label for="prefPreferredAge">Preferred Partner Age:</label>
-      <select id="prefPreferredAge">
-        <option value="">-- Select Age --</option>
-        <option value="18">18</option>
-        <option value="19">19</option>
-        <option value="20">20+</option>
-      </select>
-
-      <label for="prefTopics">Interests:</label>
-      <input type="text" id="prefTopics" placeholder="e.g. music, movies, travel" />
-
-      <label for="prefLocation">Country:</label>
-      <select id="prefLocation">
-        <option value="">-- Select Country --</option>
-      </select>
-
-      <button id="savePrefsBtn">Save Preferences</button>
-    </section>
-
-    <div class="button-bar" id="initialButtons">
-      <button id="startBtn" title="Start">
-        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-      <button id="togglePrefsBtn" title="Preferences">
-        <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-6a2 2 0 012 2v1.18a7.003 7.003 0 014.9 4.9H21a2 2 0 012 2v2a2 2 0 01-2 2h-1.18a7.003 7.003 0 01-4.9 4.9V22a2 2 0 01-2 2h-2a2 2 0 01-2-2v-1.18a7.003 7.003 0 01-4.9-4.9H3a2 2 0 01-2-2v-2a2 2 0 012-2h1.18a7.003 7.003 0 014.9-4.9V4a2 2 0 012-2h2z"/></svg>
-      </button>
-      <button id="homeBtn" title="Return Home">
-        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      </button>
+    <!-- Remote & Local Videos -->
+    <div id="remote-player">
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+    <div id="local-player">
+      <video id="localVideo" autoplay muted playsinline></video>
     </div>
 
-    <div class="button-bar fade-out" id="callButtons" style="pointer-events: none;">
-      <button id="skipBtn" title="Skip">
-        <svg viewBox="0 0 24 24"><path d="M16 12l-6 6v-12z"/></svg>
-      </button>
-      <button id="endCallBtn" title="End Call">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f33"/><path d="M15 9l-6 6M9 9l6 6" stroke="#fff" stroke-width="2"/></svg>
-      </button>
+    <!-- Top Right Buttons -->
+    <button id="blockBtn" type="button">🚫</button>
+    <button id="endCallBtn" type="button">❌</button>
+
+    <!-- Preferences Panel -->
+    <div id="preferencesPanel" class="hidden">
+      <label for="genderSelect">Gender:</label>
+      <select id="genderSelect">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="any">Any</option>
+      </select>
+
+      <label for="locationSelect">Location:</label>
+      <select id="locationSelect">
+        <option value="US">US</option>
+        <option value="UK">UK</option>
+        <option value="EU">EU</option>
+        <option value="ANY">Any</option>
+      </select>
+
+      <button id="savePrefsBtn" type="button">Save</button>
     </div>
 
-    <div id="statusText">Not connected</div>
-    <div id="countdownOverlay"><h1 id="countdownNumber">3</h1></div>
+    <!-- Initial Buttons -->
+    <div id="initialButtons">
+      <button id="startBtn" type="button">Start</button>
+      <button id="togglePrefsBtn" type="button">Preferences</button>
+    </div>
+
+    <!-- Call Buttons -->
+    <div id="callButtons" class="hidden">
+      <button id="skipBtn" type="button">⏭️</button>
+      <button id="switchCamBtn" type="button">🔄</button>
+      <button id="toggleCamBtn" type="button">🎥</button>
+    </div>
+
+    <!-- Chat UI -->
+    <div id="chatContainer" class="hidden">
+      <div id="chatBox"></div>
+      <div id="typingIndicator"></div>
+      <div id="chatControls">
+        <input type="text" id="chatInput" placeholder="Type a message..." />
+        <button id="emojiBtn" type="button">😊</button>
+        <button id="sendChatBtn" type="button">Send</button>
+      </div>
+    </div>
+
+    <!-- Ban Overlay -->
+    <div id="banOverlay">
+      <div class="banned">
+        <h1>You have been banned</h1>
+        <div class="timer">Time Remaining: 10:00</div>
+        <div class="rules">
+          <p>Reasons: nudity, abuse, or other violations.</p>
+          <p><span class="highlight">Repeat offenses may result in permanent ban.</span></p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Add Agora SDK -->
-  <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
-
-  <script type="module">
-    const startBtn = document.getElementById('startBtn');
-    const countdownOverlay = document.getElementById('countdownOverlay');
-    const countdownNumber = document.getElementById('countdownNumber');
-    const callButtons = document.getElementById('callButtons');
-    const initialButtons = document.getElementById('initialButtons');
-    const statusText = document.getElementById('statusText');
-
-    let client;
-    let localTracks;
-    let joined = false;
-
-    startBtn.onclick = () => {
-      startCountdown(async () => {
-        await joinRoom("Mintza");
-      });
-    };
-
-    function startCountdown(callback) {
-      let count = 3;
-      countdownOverlay.style.display = 'flex';
-      countdownNumber.textContent = count;
-
-      const interval = setInterval(() => {
-        count--;
-        countdownNumber.textContent = count;
-        if (count <= 0) {
-          clearInterval(interval);
-          countdownOverlay.style.display = 'none';
-          callback();
-        }
-      }, 1000);
-    }
-
-    async function joinRoom(channelName) {
-      const appId = "f650f821304b4716b121c25cb662ece4";
-      const token = "007eJxTYFj1z2Qfc5mNxIqE99nB7vMmXM/11LY6dTp6WvyJjScWuF9VYEgzMzVIszAyNDYwSTIxNzRLMjQyTDYyTU4yMzNKTU41MZntkdEQyMhgoviOkZEBAkF8NgbfzLySqkQGBgCRLh/b";
-
-      client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-
-      await client.join(appId, channelName, token, null);
-      localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
-      localTracks[1].play('local-player');
-
-      await client.publish(localTracks);
-
-      client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        if (mediaType === "video") {
-          user.videoTrack.play("remote-player");
-        }
-      });
-
-      joined = true;
-      statusText.textContent = "Connected to test room";
-      initialButtons.style.display = "none";
-      callButtons.style.pointerEvents = "auto";
-      callButtons.classList.remove("fade-out");
-      callButtons.classList.add("fade-in");
-    }
-  </script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>

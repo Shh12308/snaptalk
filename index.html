@@ -2,370 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Random Video Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snaptalk - Home</title>
+
+  <!-- Google AdSense Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5847677612423434" crossorigin="anonymous"></script>
+
   <style>
-    /* === Your Full Custom CSS === */
-    /* Base Reset */
+    /* Reset & Base */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
     }
-
     html, body {
       height: 100%;
-      width: 100%;
-      background-color: #000;
-      color: #fff;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #videoContainer {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
-      position: relative;
-      user-select: none;
-    }
-
-    /* Video Slots */
-    #remote-player,
-    #local-player {
-      width: 100%;
-      background: #111;
-      position: relative;
-    }
-
-    #remote-player {
-      flex: 1;
-      border-bottom: 2px solid #333;
-    }
-
-    #local-player {
-      flex: 1;
-      border-top: 2px solid #333;
-    }
-
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #000;
-    }
-
-    /* Button Areas */
-    #initialButtons,
-    #callButtons {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 12px 0;
-      user-select: none;
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-    }
-
-    #initialButtons button,
-    #callButtons button {
-      background: #0078d4;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(-45deg, #141e30, #243b55, #141e30);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      color: #f0f3f7;
+      overflow-x: hidden;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
-    #initialButtons button:hover,
-    #callButtons button:hover {
-      background-color: #005fa3;
-    }
-
-    /* Individual Top Right Buttons */
-    #blockBtn,
-    #endCallBtn {
-      position: absolute;
-      top: 10px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      z-index: 10;
-    }
-
-    #blockBtn {
-      right: 60px;
-    }
-
-    #endCallBtn {
-      right: 10px;
-    }
-
-    /* Preferences Panel */
-    #preferencesPanel {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #0078d4;
-      max-width: 90vw;
-      display: none;
-      flex-wrap: wrap;
-      gap: 15px;
-      color: white;
-      z-index: 10;
-      font-size: 0.9rem;
-    }
-
-    #preferencesPanel label {
-      white-space: nowrap;
-      margin-right: 6px;
-    }
-
-    #preferencesPanel select,
-    #preferencesPanel input[type="text"] {
-      background: #222;
-      border: 1px solid #555;
-      border-radius: 6px;
-      color: white;
-      padding: 5px 10px;
-      font-size: 1rem;
-    }
-
-    #preferencesPanel select {
-      width: 100px;
-    }
-
-    #preferencesPanel input[type="text"] {
-      width: 200px;
-    }
-
-    #savePrefsBtn {
-      background: #0078d4;
-      border: none;
-      color: white;
-      font-weight: bold;
-      padding: 7px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      align-self: center;
-    }
-
-    /* Chat UI */
-    #chatContainer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      z-index: 999;
-      backdrop-filter: blur(6px);
-    }
-
-    #chatBox {
-      max-height: 150px;
-      overflow-y: auto;
-      font-size: 14px;
-      padding-right: 5px;
-    }
-
-    /* Typing Indicator */
-    #typingIndicator {
-      font-size: 0.9rem;
-      color: #ccc;
-      font-style: italic;
-      margin-left: 5px;
-      transition: opacity 0.2s ease;
-    }
-
-    /* Chat Input Wrapper */
-    #chatControls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #chatInput {
-      flex: 1;
-      padding: 6px 10px;
-      border: none;
-      border-radius: 4px;
-      background-color: rgba(255, 255, 255, 0.1);
-      color: white;
-    }
-
-    #chatInput::placeholder {
-      color: #ccc;
-    }
-
-    #sendChatBtn {
-      background-color: #00c1ff;
-      color: #fff;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    #sendChatBtn:hover {
-      background-color: #009ccf;
-    }
-
-    /* Emoji Button */
-    #emojiBtn {
-      background: transparent;
-      border: none;
-      font-size: 1.4rem;
-      cursor: pointer;
-      padding: 2px 6px;
-      transition: transform 0.2s ease;
-    }
-
-    #emojiBtn:hover {
-      transform: scale(1.2);
-    }
-
-    /* SVG Icon Styling */
-    svg {
-      fill: white;
-      width: 20px;
-      height: 20px;
-    }
-
-    /* Ban Overlay */
-    #banOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.95);
-      display: none;
-      z-index: 10000;
-      justify-content: center;
-      align-items: center;
+    /* Main Container */
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+      padding: 40px 30px;
+      max-width: 400px;
+      width: 90%;
       text-align: center;
-      padding: 40px 20px;
+      transition: transform 0.4s;
+    }
+    .container:hover {
+      transform: translateY(-5px);
     }
 
-    #banOverlay .banned {
-      background: #111;
-      border: 2px solid #e74c3c;
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 600px;
-    }
-
-    #banOverlay h1 {
-      color: #e74c3c;
+    .container h1 {
+      font-size: 36px;
       margin-bottom: 20px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(37, 117, 252, 0.4);
     }
 
-    #banOverlay .timer {
-      font-size: 1.5rem;
-      margin: 10px 0 20px;
-      color: #f1c40f;
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    #banOverlay .rules {
-      text-align: left;
-      font-size: 0.95rem;
-    }
-
-    #banOverlay .rules .highlight {
+    .btn {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      border: none;
+      padding: 15px 20px;
+      font-size: 18px;
       font-weight: bold;
-      color: #e74c3c;
+      letter-spacing: 1px;
+      color: #fff;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 8px 20px rgba(37, 117, 252, 0.35);
     }
 
-    .hidden {
-      display: none !important;
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 30px rgba(37, 117, 252, 0.5);
+    }
+
+    /* Top Ad Container (Optional) */
+    .ad-container-top {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 728px;
+      padding: 0 10px;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 30px 20px;
+      }
+      .container h1 {
+        font-size: 28px;
+      }
+      .btn {
+        font-size: 16px;
+        padding: 12px 18px;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="videoContainer">
-    <div id="remote-player"><video id="remoteVideo" autoplay playsinline></video></div>
-    <div id="local-player"><video id="localVideo" autoplay muted playsinline></video></div>
 
-    <!-- Top Buttons -->
-    <button id="blockBtn">🚫</button>
-    <button id="endCallBtn">❌</button>
+  <!-- Top Ad Container -->
+  <div class="ad-container-top">
+    <ins class="adsbygoogle"
+      style="display:block; width:100%; height:80px;"
+      data-ad-client="ca-pub-5847677612423434"
+      data-ad-slot="YOUR_AD_SLOT"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
 
-    <!-- Preferences Panel -->
-    <div id="preferencesPanel">
-      <label for="genderSelect">Gender:</label>
-      <select id="genderSelect">
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-        <option value="any">Any</option>
-      </select>
-
-      <label for="locationSelect">Location:</label>
-      <select id="locationSelect">
-        <option value="US">US</option>
-        <option value="UK">UK</option>
-        <option value="EU">EU</option>
-        <option value="ANY">Any</option>
-      </select>
-
-      <button id="savePrefsBtn">Save</button>
-    </div>
-
-    <!-- Initial Buttons -->
-    <div id="initialButtons">
-      <button id="startBtn">Start</button>
-      <button id="togglePrefsBtn">Preferences</button>
-    </div>
-
-    <!-- In Call Buttons -->
-    <div id="callButtons" class="hidden">
-      <button id="skipBtn">Skip</button>
-    </div>
-
-    <!-- Chat -->
-    <div id="chatContainer" class="hidden">
-      <div id="chatBox"></div>
-      <div id="typingIndicator"></div>
-      <div id="chatControls">
-        <input type="text" id="chatInput" placeholder="Type a message..." />
-        <button id="emojiBtn">😊</button>
-        <button id="sendChatBtn">Send</button>
-      </div>
-    </div>
-
-    <!-- Ban Overlay -->
-    <div id="banOverlay">
-      <div class="banned">
-        <h1>You have been banned</h1>
-        <div class="timer">Time Remaining: 10:00</div>
-        <div class="rules">
-          <p>Reasons: nudity, abuse, or other violations.</p>
-          <p><span class="highlight">Repeat offenses may result in permanent ban.</span></p>
-        </div>
-      </div>
+  <!-- Main Content -->
+  <div class="container">
+    <h1>Snaptalk</h1>
+    <div class="btn-container">
+      <a href="achat.html" class="btn">Teen Chat (13–17)</a>
+      <a href="chat.html" class="btn">Adult Chat (18+)</a>
     </div>
   </div>
 
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="chat.js"></script>
 </body>
 </html>

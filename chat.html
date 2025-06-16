@@ -2,135 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Video Chat App - Test</title>
-  <style>
-    body {
-      margin: 0; background: #121212; color: white; font-family: Arial, sans-serif;
-      display: flex; flex-direction: column; align-items: center; padding: 1rem;
-    }
-    #videoContainer {
-      display: flex; gap: 10px; width: 90vw; max-width: 900px; height: 400px;
-    }
-    .video-slot {
-      flex: 1; background: black; display: flex; justify-content: center; align-items: center;
-    }
-    video {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-    button {
-      margin-top: 15px; padding: 10px 20px; font-size: 1rem;
-    }
-  </style>
-
-  <!-- Agora Web SDK NG -->
-  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
+  <title>Random Video Chat</title>
+  <link rel="stylesheet" href="chat.css">
 </head>
 <body>
-  <h1>Video Chat App - Test</h1>
-
   <div id="videoContainer">
-    <div id="remote-player" class="video-slot">Remote Video</div>
-    <div id="local-player" class="video-slot">Local Video</div>
+
+    <!-- Remote & Local Videos (hidden initially) -->
+    <div id="remote-player" class="hidden">
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+    <div id="local-player" class="hidden">
+      <video id="localVideo" autoplay muted playsinline></video>
+    </div>
+
+    <!-- Top Right Buttons (Block & End Call) - hidden -->
+    <div id="topRightButtons" class="hidden">
+      <button id="blockBtn">🚫</button>
+      <button id="endCallBtn">❌</button>
+    </div>
+
+    <!-- Preferences Panel (hidden) -->
+    <div id="preferencesPanel" class="hidden">
+      <label>Preferred Age:
+        <select id="prefPreferredAge">
+          <option value="teen">13–17</option>
+          <option value="adult">18+</option>
+          <option value="any">Any</option>
+        </select>
+      </label>
+      <label>Gender:
+        <select id="prefGender">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="any">Any</option>
+        </select>
+      </label>
+      <label>Location:
+        <select id="prefLocation">
+          <!-- Populated dynamically -->
+        </select>
+      </label>
+      <label>Topics:
+        <input type="text" id="prefTopics" placeholder="Interests, comma separated" />
+      </label>
+      <button id="savePrefsBtn">Save</button>
+    </div>
+
+    <!-- Initial Buttons (Start, Preferences, Home) - visible -->
+    <div id="initialButtons">
+      <button id="startBtn">Start</button>
+      <button id="togglePrefsBtn">Preferences</button>
+      <button id="homeBtn">Home</button>
+    </div>
+
+    <!-- Call Buttons (Skip) - hidden -->
+    <div id="callButtons" class="hidden">
+      <button id="skipBtn">Skip</button>
+    </div>
+
+    <!-- Chat UI - hidden -->
+    <div id="chatBox" class="hidden">
+      <div id="chatMessages"></div>
+      <div id="typingIndicator" class="hidden">Partner is typing...</div>
+      <div id="chatControls">
+        <input type="text" id="chatInput" placeholder="Type a message..." />
+        <button id="emojiBtn">😊</button>
+        <button id="chatSendBtn">Send</button>
+      </div>
+    </div>
+
+    <!-- Ban Overlay - hidden -->
+    <div id="banOverlay" class="hidden">
+      <div class="banned">
+        <h1>You have been banned</h1>
+        <div class="timer">Time Remaining: 100:00</div>
+        <div class="rules">
+          <p>Reason: Minor detected.</p>
+          <p><span class="highlight">Repeat offenses may result in permanent ban.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Text - hidden -->
+    <div id="statusText" class="hidden">Ready to start!</div>
+
   </div>
 
-  <button id="startBtn">Start Call</button>
-  <button id="endCallBtn" style="display:none;">End Call</button>
-
-<script>
-  const APP_ID = "f650f821304b4716b121c25cb662ece4";
-  const SUPABASE_TOKEN_URL = "https://hvmqgdupvpifyjtzwauf.supabase.co/functions/v1/quick-worker";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2bXFnZHVwdnBpZnlqdHp3YXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxOTAzOTMsImV4cCI6MjA2MDc2NjM5M30.S0i_e_TvpqwWTyE22cWDmEfmJ9yzd4j_Wg5GtHxnzd0";
-
-  let client;
-  let localTracks = {};
-  let joined = false;
-
-  async function startCall(channel, uid) {
-    try {
-      client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-
-      client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        if (mediaType === "video") {
-          user.videoTrack.play("remote-player");
-        }
-        if (mediaType === "audio") {
-          user.audioTrack.play();
-        }
-      });
-
-      client.on("user-unpublished", user => {
-        // Clear remote video div when user leaves or stops video
-        document.getElementById("remote-player").innerHTML = "Remote Video";
-      });
-
-      // Fetch token
-      const tokenRes = await fetch(`${SUPABASE_TOKEN_URL}?channel=${channel}&uid=${uid}`, {
-        headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
-      });
-
-      if (!tokenRes.ok) {
-        alert("Failed to fetch token: " + tokenRes.status);
-        return;
-      }
-
-      const tokenData = await tokenRes.json();
-      const token = tokenData.token;
-
-      // Join channel
-      await client.join(APP_ID, channel, token, uid);
-
-      // Create local audio and video tracks
-      localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
-      localTracks.video = await AgoraRTC.createCameraVideoTrack();
-
-      // Play local video track
-      localTracks.video.play("local-player");
-
-      // Publish local tracks
-      await client.publish([localTracks.audio, localTracks.video]);
-
-      joined = true;
-      document.getElementById("startBtn").style.display = "none";
-      document.getElementById("endCallBtn").style.display = "inline-block";
-    } catch (error) {
-      console.error("startCall error:", error);
-      alert("Error starting call: " + error.message);
-    }
-  }
-
-  async function leaveCall() {
-    if (!joined) return;
-
-    try {
-      await client.leave();
-
-      localTracks.audio?.close();
-      localTracks.video?.close();
-
-      document.getElementById("remote-player").innerHTML = "Remote Video";
-      document.getElementById("local-player").innerHTML = "Local Video";
-
-      document.getElementById("startBtn").style.display = "inline-block";
-      document.getElementById("endCallBtn").style.display = "none";
-
-      joined = false;
-    } catch (error) {
-      console.error("leaveCall error:", error);
-      alert("Error leaving call: " + error.message);
-    }
-  }
-
-  document.getElementById("startBtn").addEventListener("click", async () => {
-    const channel = "testchannel";  // Use fixed channel name for testing
-    const uid = Math.floor(Math.random() * 1000000);
-    await startCall(channel, uid);
-  });
-
-  document.getElementById("endCallBtn").addEventListener("click", async () => {
-    await leaveCall();
-  });
-</script>
+  <!-- Socket.io & JS -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="achat.js" type="module"></script>
 </body>
 </html>

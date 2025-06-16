@@ -13,6 +13,9 @@ const blockBtn = document.getElementById('blockBtn');
 const endCallBtn = document.getElementById('endCallBtn');
 const skipBtn = document.getElementById('skipBtn');
 
+const switchCamBtn = document.getElementById('switchCamBtn');
+const toggleCamBtn = document.getElementById('toggleCamBtn');
+
 const preferencesPanel = document.getElementById('preferencesPanel');
 const genderSelect = document.getElementById('genderSelect');
 const locationSelect = document.getElementById('locationSelect');
@@ -34,6 +37,8 @@ let localStream;
 let peerConnection;
 let partnerSocketId;
 let typingTimeout;
+let usingFrontCamera = true;
+let findingMatch = false;
 
 // === ICE servers ===
 const iceConfig = {
@@ -42,31 +47,49 @@ const iceConfig = {
   ]
 };
 
+// === BLOCKED ===
+let blockedIds = JSON.parse(localStorage.getItem('blockedIds') || '[]');
+
+// === Load saved preferences ===
+genderSelect.value = localStorage.getItem('gender') || 'any';
+locationSelect.value = localStorage.getItem('location') || 'any';
+
 // === MEDIA ===
 async function startLocalStream() {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  localVideo.srcObject = localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
+      audio: true
+    });
+    localVideo.srcObject = localStream;
+  } catch (err) {
+    alert('Could not access camera/mic. Please check your permissions.');
+    console.error(err);
+  }
 }
 
 // === BUTTONS ===
 
 // Show/hide preferences
 togglePrefsBtn.onclick = () => {
-  preferencesPanel.style.display = preferencesPanel.style.display === 'none' ? 'flex' : 'none';
+  if (preferencesPanel.style.display === 'none' || !preferencesPanel.style.display) {
+    preferencesPanel.style.display = 'flex';
+  } else {
+    preferencesPanel.style.display = 'none';
+  }
 };
 
-// Save preferences (currently just closes panel)
+// Save preferences to localStorage
 savePrefsBtn.onclick = () => {
+  localStorage.setItem('gender', genderSelect.value);
+  localStorage.setItem('location', locationSelect.value);
   preferencesPanel.style.display = 'none';
 };
 
 // Start match
 startBtn.onclick = async () => {
   await startLocalStream();
-  socket.emit('find_match', {
-    gender: genderSelect.value,
-    location: locationSelect.value
-  });
+  findMatch();
   initialButtons.classList.add('hidden');
   callButtons.classList.remove('hidden');
   chatContainer.classList.remove('hidden');
@@ -75,10 +98,7 @@ startBtn.onclick = async () => {
 // Skip to next
 skipBtn.onclick = () => {
   endCall();
-  socket.emit('find_match', {
-    gender: genderSelect.value,
-    location: locationSelect.value
-  });
+  findMatch();
 };
 
 // End call & return to start
@@ -91,13 +111,42 @@ endCallBtn.onclick = () => {
 
 // Block current peer
 blockBtn.onclick = () => {
-  socket.emit('block_user', partnerSocketId);
-  skipBtn.onclick();
+  if (partnerSocketId) {
+    blockedIds.push(partnerSocketId);
+    localStorage.setItem('blockedIds', JSON.stringify(blockedIds));
+    socket.emit('block_user', partnerSocketId);
+    endCall();
+    findMatch();
+  }
+};
+
+// Switch camera
+switchCamBtn.onclick = async () => {
+  usingFrontCamera = !usingFrontCamera;
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+  await startLocalStream();
+  // Renegotiate if needed
+  if (peerConnection && partnerSocketId) {
+    const senders = peerConnection.getSenders();
+    senders.forEach(sender => {
+      if (sender.track.kind === 'video') {
+        sender.replaceTrack(localStream.getVideoTracks()[0]);
+      }
+    });
+  }
+};
+
+// Toggle camera on/off
+toggleCamBtn.onclick = () => {
+  if (localStream) {
+    const videoTrack = localStream.getVideoTracks()[0];
+    videoTrack.enabled = !videoTrack.enabled;
+  }
 };
 
 // === CHAT ===
-
-// Send chat message
 sendChatBtn.onclick = () => {
   const msg = chatInput.value.trim();
   if (msg && partnerSocketId) {
@@ -107,19 +156,17 @@ sendChatBtn.onclick = () => {
   }
 };
 
-// Typing indicator
 chatInput.oninput = () => {
-  socket.emit('typing', { to: partnerSocketId });
+  if (partnerSocketId) {
+    socket.emit('typing', { to: partnerSocketId });
+  }
 };
 
-// Emoji button (hook for picker)
 emojiBtn.onclick = () => {
-  // Example: use your emoji picker library here
   alert('Open emoji picker here!');
 };
 
 // === HELPERS ===
-
 function appendChatMessage(sender, msg) {
   const p = document.createElement('p');
   p.innerHTML = `<strong>${sender}:</strong> ${msg}`;
@@ -136,12 +183,11 @@ function showTyping() {
 }
 
 // === SIGNALING ===
-
 socket.on('match_found', async ({ socketId }) => {
+  findingMatch = false;
   partnerSocketId = socketId;
   createPeerConnection();
 
-  // Caller sends offer
   if (socketId > socket.id) {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     const offer = await peerConnection.createOffer();
@@ -163,7 +209,11 @@ socket.on('signal', async ({ from, data }) => {
   } else if (data.type === 'answer') {
     await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
   } else if (data.candidate) {
-    await peerConnection.addIceCandidate(new RTCIceCandidate(data));
+    try {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(data));
+    } catch (err) {
+      console.error('Error adding ICE candidate', err);
+    }
   }
 });
 
@@ -179,14 +229,22 @@ socket.on('end_call', () => {
   endCall();
 });
 
-// === PEER CONNECTION ===
+socket.on('banned', ({ time }) => {
+  banOverlay.style.display = 'flex';
+  banOverlay.querySelector('.timer').innerText = `Time Remaining: ${time}`;
+});
 
+// === PEER CONNECTION ===
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(iceConfig);
 
   peerConnection.onicecandidate = (e) => {
     if (e.candidate) {
-      socket.emit('signal', { to: partnerSocketId, data: e.candidate });
+      try {
+        socket.emit('signal', { to: partnerSocketId, data: e.candidate });
+      } catch (err) {
+        console.error('Error sending ICE candidate', err);
+      }
     }
   };
 
@@ -202,23 +260,32 @@ function createPeerConnection() {
 }
 
 // === END CALL ===
-
 function endCall() {
   if (peerConnection) {
     peerConnection.close();
     peerConnection = null;
   }
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
   remoteVideo.srcObject = null;
-  partnerSocketId && socket.emit('end_call', { to: partnerSocketId });
+  localVideo.srcObject = null;
+  if (partnerSocketId) {
+    socket.emit('end_call', { to: partnerSocketId });
+  }
   partnerSocketId = null;
 }
 
-// === BAN OVERLAY (example hook) ===
-
-socket.on('banned', ({ time }) => {
-  banOverlay.style.display = 'flex';
-  banOverlay.querySelector('.timer').innerText = `Time Remaining: ${time}`;
-});
+// === MATCH ===
+function findMatch() {
+  if (findingMatch) return;
+  findingMatch = true;
+  socket.emit('find_match', {
+    gender: genderSelect.value,
+    location: locationSelect.value,
+    blocked: blockedIds
+  });
+}
 
 // === INIT ===
 preferencesPanel.style.display = 'none';

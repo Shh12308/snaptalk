@@ -1,122 +1,218 @@
-* {
-      margin: 0;
-      padding: 0;
+/* === RESET & BASE === */
+    * {
+      margin: 0; padding: 0;
       box-sizing: border-box;
       font-family: Arial, sans-serif;
     }
-    body, html {
-      height: 100%;
-      width: 100%;
-      background-color: #000;
-      color: #fff;
+
+    html, body {
+      height: 100%; width: 100%;
+      background: #000;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
+
     #videoContainer {
       flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      width: 100vw;
+      height: 100vh; width: 100vw;
+      position: relative;
       user-select: none;
-      position: relative;
     }
+
     #remote-player, #local-player {
-      width: 100%;
-      background: #111;
-      position: relative;
-    }
-    #remote-player {
       flex: 1;
+      background: #111;
+    }
+
+    #remote-player {
       border-bottom: 2px solid #333;
     }
     #local-player {
-      flex: 1;
       border-top: 2px solid #333;
     }
+
     video {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       object-fit: cover;
-      background: #000;
     }
-    /* BUTTON AREAS */
+
+    /* === BUTTONS === */
     #initialButtons, #callButtons {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      background: rgba(0,0,0,0.7);
-      padding: 12px 0;
-      user-select: none;
+      position: absolute;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 10;
     }
-    #initialButtons button, #callButtons button {
+
+    #initialButtons.hidden, #callButtons.hidden,
+    #chatContainer.hidden, #preferencesPanel.hidden {
+      display: none !important;
+    }
+
+    #initialButtons button,
+    #callButtons button {
       background: #0078d4;
+      color: #fff;
       border: none;
       border-radius: 6px;
       padding: 10px 20px;
-      font-size: 1rem;
-      color: white;
       cursor: pointer;
-      transition: background-color 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    #initialButtons button:hover, #callButtons button:hover {
-      background-color: #005fa3;
-    }
-    #preferencesPanel {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #0078d4;
-      max-width: 90vw;
-      display: none;
-      flex-wrap: wrap;
-      gap: 15px;
-      color: white;
-      z-index: 10;
-      font-size: 0.9rem;
-    }
-    #preferencesPanel label {
-      white-space: nowrap;
-      margin-right: 6px;
-    }
-    #preferencesPanel select,
-    #preferencesPanel input[type="text"] {
-      background: #222;
-      border: 1px solid #555;
-      border-radius: 6px;
-      color: white;
-      padding: 5px 10px;
-      font-size: 1rem;
-    }
-    #preferencesPanel select {
-      width: 100px;
-    }
-    #preferencesPanel input[type="text"] {
-      width: 200px;
-    }
-    #savePrefsBtn {
-      background: #0078d4;
-      border: none;
-      color: white;
-      font-weight: bold;
-      padding: 7px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      align-self: center;
+      transition: background 0.3s ease;
     }
 
-    /* SVG BUTTONS ICONS */
-    svg {
-      fill: white;
-      width: 20px;
-      height: 20px;
+    #initialButtons button:hover,
+    #callButtons button:hover {
+      background: #005fa3;
     }
+
+    #blockBtn, #endCallBtn {
+      position: absolute; top: 10px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.8rem;
+      cursor: pointer;
+      z-index: 15;
+    }
+    #blockBtn { right: 60px; }
+    #endCallBtn { right: 10px; }
+
+    /* === PREFERENCES === */
+    #preferencesPanel {
+      position: absolute;
+      top: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      border-radius: 8px;
+      padding: 15px 25px;
+      box-shadow: 0 0 10px #0078d4;
+      display: flex; flex-wrap: wrap; gap: 10px;
+      color: #fff;
+      z-index: 20;
+    }
+
+    #preferencesPanel label {
+      margin-right: 6px;
+    }
+
+    #preferencesPanel select,
+    #preferencesPanel input {
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 5px 10px;
+    }
+
+    #savePrefsBtn {
+      background: #0078d4;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+
+    /* === CHAT === */
+    #chatContainer {
+      position: fixed;
+      bottom: 0; left: 0; width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      padding: 10px;
+      z-index: 999;
+    }
+
+    #chatBox {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    #typingIndicator {
+      font-size: 0.9rem;
+      color: #ccc;
+      font-style: italic;
+    }
+
+    #chatControls {
+      display: flex;
+      gap: 8px;
+    }
+
+    #chatInput {
+      flex: 1;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+    }
+
+    #sendChatBtn {
+      background: #00c1ff;
+      border: none;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #sendChatBtn:hover {
+      background: #009ccf;
+    }
+
+    #emojiBtn {
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+
+    /* === BAN OVERLAY === */
+    #banOverlay {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    #banOverlay .banned {
+      background: #111;
+      border: 2px solid #e74c3c;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      text-align: center;
+      color: #fff;
+    }
+
+    #banOverlay h1 {
+      color: #e74c3c;
+      margin-bottom: 20px;
+    }
+
+    #banOverlay .timer {
+      font-size: 1.5rem;
+      margin: 10px 0 20px;
+      color: #f1c40f;
+    }
+
+    #banOverlay .rules {
+      font-size: 0.95rem;
+    }
+
+    #banOverlay .highlight {
+      color: #e74c3c;
+      font-weight: bold;
+}
