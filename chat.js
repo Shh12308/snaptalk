@@ -39,12 +39,11 @@ let partnerSocketId;
 let typingTimeout;
 let usingFrontCamera = true;
 let findingMatch = false;
+let debounce = false; // ✅ Prevent spam clicks
 
 // === ICE servers ===
 const iceConfig = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' }
-  ]
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
 // === BLOCKED ===
@@ -70,23 +69,19 @@ async function startLocalStream() {
 
 // === BUTTONS ===
 
-// Show/hide preferences
+// Toggle preferences with smooth animation
 togglePrefsBtn.onclick = () => {
-  if (preferencesPanel.style.display === 'none' || !preferencesPanel.style.display) {
-    preferencesPanel.style.display = 'flex';
-  } else {
-    preferencesPanel.style.display = 'none';
-  }
+  preferencesPanel.classList.toggle('visible');
 };
 
-// Save preferences to localStorage
+// Save preferences
 savePrefsBtn.onclick = () => {
   localStorage.setItem('gender', genderSelect.value);
   localStorage.setItem('location', locationSelect.value);
-  preferencesPanel.style.display = 'none';
+  preferencesPanel.classList.remove('visible');
 };
 
-// Start match
+// Start
 startBtn.onclick = async () => {
   await startLocalStream();
   findMatch();
@@ -95,13 +90,16 @@ startBtn.onclick = async () => {
   chatContainer.classList.remove('hidden');
 };
 
-// Skip to next
+// Skip with debounce
 skipBtn.onclick = () => {
+  if (debounce) return;
+  debounce = true;
   endCall();
   findMatch();
+  setTimeout(() => debounce = false, 1000);
 };
 
-// End call & return to start
+// End call
 endCallBtn.onclick = () => {
   endCall();
   initialButtons.classList.remove('hidden');
@@ -109,32 +107,26 @@ endCallBtn.onclick = () => {
   chatContainer.classList.add('hidden');
 };
 
-// Block current peer
+// Block with debounce
 blockBtn.onclick = () => {
-  if (partnerSocketId) {
-    blockedIds.push(partnerSocketId);
-    localStorage.setItem('blockedIds', JSON.stringify(blockedIds));
-    socket.emit('block_user', partnerSocketId);
-    endCall();
-    findMatch();
-  }
+  if (debounce || !partnerSocketId) return;
+  debounce = true;
+  blockedIds.push(partnerSocketId);
+  localStorage.setItem('blockedIds', JSON.stringify(blockedIds));
+  socket.emit('block_user', partnerSocketId);
+  endCall();
+  findMatch();
+  setTimeout(() => debounce = false, 1000);
 };
 
 // Switch camera
 switchCamBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-  }
+  if (localStream) localStream.getTracks().forEach(track => track.stop());
   await startLocalStream();
-  // Renegotiate if needed
   if (peerConnection && partnerSocketId) {
-    const senders = peerConnection.getSenders();
-    senders.forEach(sender => {
-      if (sender.track.kind === 'video') {
-        sender.replaceTrack(localStream.getVideoTracks()[0]);
-      }
-    });
+    const videoSender = peerConnection.getSenders().find(s => s.track.kind === 'video');
+    if (videoSender) videoSender.replaceTrack(localStream.getVideoTracks()[0]);
   }
 };
 
@@ -157,14 +149,15 @@ sendChatBtn.onclick = () => {
 };
 
 chatInput.oninput = () => {
-  if (partnerSocketId) {
-    socket.emit('typing', { to: partnerSocketId });
-  }
+  if (partnerSocketId) socket.emit('typing', { to: partnerSocketId });
 };
 
-emojiBtn.onclick = () => {
-  alert('Open emoji picker here!');
-};
+// Emoji picker using Emoji Button library
+const picker = new EmojiButton();
+picker.on('emoji', emoji => {
+  chatInput.value += emoji;
+});
+emojiBtn.onclick = () => picker.togglePicker(emojiBtn);
 
 // === HELPERS ===
 function appendChatMessage(sender, msg) {
@@ -177,9 +170,7 @@ function appendChatMessage(sender, msg) {
 function showTyping() {
   typingIndicator.innerText = 'Partner is typing...';
   clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => {
-    typingIndicator.innerText = '';
-  }, 1500);
+  typingTimeout = setTimeout(() => typingIndicator.innerText = '', 1500);
 }
 
 // === SIGNALING ===
@@ -199,7 +190,6 @@ socket.on('match_found', async ({ socketId }) => {
 socket.on('signal', async ({ from, data }) => {
   partnerSocketId = from;
   if (!peerConnection) createPeerConnection();
-
   if (data.type === 'offer') {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
@@ -221,13 +211,9 @@ socket.on('chat', ({ from, message }) => {
   appendChatMessage('Stranger', message);
 });
 
-socket.on('typing', () => {
-  showTyping();
-});
+socket.on('typing', showTyping);
 
-socket.on('end_call', () => {
-  endCall();
-});
+socket.on('end_call', endCall);
 
 socket.on('banned', ({ time }) => {
   banOverlay.style.display = 'flex';
@@ -238,22 +224,18 @@ socket.on('banned', ({ time }) => {
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(iceConfig);
 
-  peerConnection.onicecandidate = (e) => {
+  peerConnection.onicecandidate = e => {
     if (e.candidate) {
-      try {
-        socket.emit('signal', { to: partnerSocketId, data: e.candidate });
-      } catch (err) {
-        console.error('Error sending ICE candidate', err);
-      }
+      socket.emit('signal', { to: partnerSocketId, data: e.candidate });
     }
   };
 
-  peerConnection.ontrack = (e) => {
+  peerConnection.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
   };
 
   peerConnection.onconnectionstatechange = () => {
-    if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+    if (['disconnected', 'failed'].includes(peerConnection.connectionState)) {
       endCall();
     }
   };
@@ -267,12 +249,11 @@ function endCall() {
   }
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
+    localVideo.srcObject = null;
+    localStream = null; // ✅ Clear ref
   }
   remoteVideo.srcObject = null;
-  localVideo.srcObject = null;
-  if (partnerSocketId) {
-    socket.emit('end_call', { to: partnerSocketId });
-  }
+  if (partnerSocketId) socket.emit('end_call', { to: partnerSocketId });
   partnerSocketId = null;
 }
 
@@ -288,6 +269,6 @@ function findMatch() {
 }
 
 // === INIT ===
-preferencesPanel.style.display = 'none';
+preferencesPanel.classList.remove('visible');
 chatContainer.classList.add('hidden');
 callButtons.classList.add('hidden');

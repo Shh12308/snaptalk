@@ -1,8 +1,5 @@
 // === Imports ===
 import { fetchGeoData } from './geolocation.js';
-import firebase from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js';
-import 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js';
-import 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js';
 
 // === Socket for WebRTC signaling only ===
 const socket = io('https://shh1-2.onrender.com');
@@ -21,14 +18,18 @@ async function getUserSigFromServer(userID) {
   return data.userSig;
 }
 
-// === Firebase Config ===
-firebase.initializeApp({
-  apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-  authDomain: "snaptalk-17f6d.firebaseapp.com",
-  projectId: "snaptalk-17f6d",
-});
-const db = firebase.firestore();
-const auth = firebase.auth();
+// === Auth (Custom) ===
+let currentUser = null;
+async function checkAuth() {
+  const res = await fetch('/api/me');
+  if (!res.ok) {
+    location.href = 'login.html';
+    return;
+  }
+  currentUser = await res.json();
+  const userSig = await getUserSigFromServer(currentUser.uid);
+  await tim.login({ userID: currentUser.uid, userSig });
+}
 
 // === WebRTC ===
 let localStream = null;
@@ -53,17 +54,12 @@ const typingIndicator = document.getElementById('typingIndicator');
 let filters = {};
 let partnerUid = null;
 let countdownTimer = null;
-let queueUnsub = null;
 
-// === Auth & IM Init ===
-auth.onAuthStateChanged(async user => {
-  if (!user) location.href = 'login.html';
-  const userSig = await getUserSigFromServer(user.uid);
-  await tim.login({ userID: user.uid, userSig });
-});
+let queueUnsub = null;
 
 // === Init ===
 (async () => {
+  await checkAuth();
   const geo = await fetchGeoData();
   populateCountries(geo.country);
 
@@ -126,11 +122,7 @@ function showInCall() {
 // === Matchmaking ===
 async function startMatchmaking(e) {
   if (e) e.preventDefault();
-  const user = auth.currentUser;
-  if (!user) return alert("You must be logged in.");
-
-  const doc = await db.collection('users').doc(user.uid).get();
-  const profile = doc.exists ? doc.data() : {};
+  if (!currentUser) return alert("You must be logged in.");
 
   showInCall();
   cancelCountdown();
@@ -141,51 +133,35 @@ async function startMatchmaking(e) {
   }
 
   filters = getFilters();
-  await db.collection('match_queue').doc(user.uid).set({
-    uid: user.uid,
-    displayName: profile.displayName || 'User',
-    location: profile.location || 'Unknown',
-    ...filters,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+
+  // Tell backend to enqueue user with filters
+  const res = await fetch('/api/enqueue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid: currentUser.uid, ...filters }),
   });
 
-  const blocked = await getBlocked(user.uid);
+  if (!res.ok) {
+    status.textContent = "Failed to join queue.";
+    return;
+  }
 
-  const q = db.collection('match_queue')
-    .where('age', '==', filters.age)
-    .where('gender', '==', filters.gender)
-    .where('location', '==', filters.location)
-    .orderBy('timestamp')
-    .limit(5);
-
-  queueUnsub = q.onSnapshot(async snap => {
-    const candidates = snap.docs
-      .map(d => d.data())
-      .filter(d => d.uid !== user.uid && !blocked.includes(d.uid));
-    if (candidates.length) {
-      const peer = candidates[0];
-      const roomId = `Room_${Date.now()}`;
-      await db.collection('matches').doc(roomId).set({
-        participants: [user.uid, peer.uid]
-      });
-      await db.collection('match_queue').doc(user.uid).delete();
-      await db.collection('match_queue').doc(peer.uid).delete();
-      startCountdown(() => onMatch(roomId, peer));
-    } else {
-      status.textContent = "Searching for a match...";
+  // Poll for matches every 3s
+  queueUnsub = setInterval(async () => {
+    const matchRes = await fetch(`/api/checkMatch?uid=${currentUser.uid}`);
+    if (matchRes.ok) {
+      const matchData = await matchRes.json();
+      if (matchData.roomId && matchData.peer) {
+        clearInterval(queueUnsub);
+        queueUnsub = null;
+        startCountdown(() => onMatch(matchData.roomId, matchData.peer));
+      } else {
+        status.textContent = "Searching for a match...";
+      }
     }
-  });
+  }, 3000);
 
   status.textContent = "Searching for a match...";
-}
-
-async function getBlocked(uid) {
-  try {
-    const doc = await db.collection('blocks').doc(uid).get();
-    return doc.exists ? doc.data().blocked || [] : [];
-  } catch {
-    return [];
-  }
 }
 
 function startCountdown(callback) {
@@ -211,10 +187,7 @@ function cancelCountdown() {
 
 async function onMatch(roomId, peer) {
   partnerUid = peer.uid;
-  const doc = await db.collection('users').doc(partnerUid).get();
-  const profile = doc.exists ? doc.data() : {};
-  status.textContent = `Connected with ${profile.displayName || 'Partner'} from ${profile.location || 'Unknown'}!`;
-
+  status.textContent = `Connected with ${peer.displayName || 'Partner'} from ${peer.location || 'Unknown'}!`;
   await startConnection(roomId, true);
 }
 
@@ -326,7 +299,7 @@ function skipMatch(e) {
   partnerUid = null;
   status.textContent = "Searching for a new match...";
   if (queueUnsub) {
-    queueUnsub();
+    clearInterval(queueUnsub);
     queueUnsub = null;
   }
   startMatchmaking();
@@ -338,7 +311,7 @@ function endCall(e) {
   endConnection();
   socket.emit('end_call');
   if (queueUnsub) {
-    queueUnsub();
+    clearInterval(queueUnsub);
     queueUnsub = null;
   }
   location.reload();
@@ -346,21 +319,13 @@ function endCall(e) {
 
 async function blockUser(e) {
   if (e) e.preventDefault();
-  const user = auth.currentUser;
-  if (!user || !partnerUid) return alert("No one to block!");
-  try {
-    const ref = db.collection('blocks').doc(user.uid);
-    const doc = await ref.get();
-    const blocked = doc.exists ? doc.data().blocked || [] : [];
-    if (!blocked.includes(partnerUid)) {
-      blocked.push(partnerUid);
-      await ref.set({ blocked });
-      alert("User blocked!");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Failed to block user.");
-  }
+  if (!currentUser || !partnerUid) return alert("No one to block!");
+  await fetch('/api/blockUser', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid: currentUser.uid, blockUid: partnerUid }),
+  });
+  alert("User blocked!");
   skipMatch();
 }
 
@@ -368,7 +333,7 @@ socket.on('end_call', () => {
   cancelCountdown();
   endConnection();
   if (queueUnsub) {
-    queueUnsub();
+    clearInterval(queueUnsub);
     queueUnsub = null;
   }
   location.reload();
