@@ -2,134 +2,258 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Snaptalk - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up - Snaptalk</title>
 
-  <!-- Google AdSense Script -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5847677612423434" crossorigin="anonymous"></script>
+  <!-- ✅ Google AdSense script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5847677612423434"
+    crossorigin="anonymous"></script>
 
   <style>
-    /* Reset & Base */
-    * {
+    /* General Styling */
+    body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-    html, body {
-      height: 100%;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(-45deg, #141e30, #243b55, #141e30);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #004aad);
+      color: #fff;
       display: flex;
-      align-items: center;
       justify-content: center;
-      color: #f0f3f7;
-      overflow-x: hidden;
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* Main Container */
-    .container {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-      padding: 40px 30px;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-      transition: transform 0.4s;
-    }
-    .container:hover {
-      transform: translateY(-5px);
-    }
-
-    .container h1 {
-      font-size: 36px;
-      margin-bottom: 20px;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(37, 117, 252, 0.4);
-    }
-
-    .btn-container {
-      display: flex;
+      align-items: center;
       flex-direction: column;
+      height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #1db9ff;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 1.2rem;
+      color: #e0e0e0;
+      margin-bottom: 40px;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
       gap: 20px;
     }
 
-    .btn {
-      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-      border: none;
-      padding: 15px 20px;
-      font-size: 18px;
+    button {
+      padding: 15px 30px;
+      font-size: 1rem;
       font-weight: bold;
-      letter-spacing: 1px;
-      color: #fff;
-      border-radius: 50px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 8px 20px rgba(37, 117, 252, 0.35);
     }
 
-    .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 12px 30px rgba(37, 117, 252, 0.5);
+    .start-call-btn {
+      background-color: #1db9ff;
+      color: #fff;
     }
 
-    /* Top Ad Container (Optional) */
-    .ad-container-top {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+    .start-call-btn:hover {
+      background-color: #0094cc;
+    }
+
+    .filters-btn {
+      background-color: #252525;
+      color: #1db9ff;
+      border: 2px solid #1db9ff;
+    }
+
+    .filters-btn:hover {
+      background-color: #1e1e2f;
+      color: #0094cc;
+      border-color: #0094cc;
+    }
+
+    /* Auth Form Styles */
+    .auth-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    input, select {
+      padding: 12px;
+      font-size: 1rem;
       width: 100%;
-      max-width: 728px;
-      padding: 0 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 10px;
     }
 
-    @media (max-width: 480px) {
-      .container {
-        padding: 30px 20px;
-      }
-      .container h1 {
-        font-size: 28px;
-      }
-      .btn {
-        font-size: 16px;
-        padding: 12px 18px;
-      }
+    .auth-btn {
+      padding: 15px 30px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      background-color: #1db9ff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .auth-btn:hover {
+      background-color: #0094cc;
+    }
+
+    .auth-toggle {
+      font-size: 0.9rem;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    footer {
+      margin-top: 60px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    footer a {
+      color: #1db9ff;
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Ad Container -->
-  <div class="ad-container-top">
-    <ins class="adsbygoogle"
-      style="display:block; width:100%; height:80px;"
-      data-ad-client="ca-pub-5847677612423434"
-      data-ad-slot="YOUR_AD_SLOT"></ins>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
+  <!-- ✅ AdSense Ad Slot ABOVE form -->
+  <ins class="adsbygoogle"
+       style="display:block; margin-bottom: 20px;"
+       data-ad-client="ca-pub-5847677612423434"
+       data-ad-slot="7864868911"
+       data-ad-format="auto"></ins>
+  <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+
+  <div class="auth-container">
+    <form id="signupForm">
+      <h2>Sign Up</h2>
+
+      <input type="text" id="nickname" placeholder="Nickname" required />
+
+      <select id="gender" required>
+        <option value="" disabled selected>Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+
+      <input type="number" id="age" placeholder="Age" min="13" required />
+
+      <input type="text" id="lifestyle" placeholder="Lifestyle (e.g. student, traveler)" required />
+
+      <input type="email" id="email" placeholder="Email" required />
+
+      <input type="password" id="password" placeholder="Password" required />
+
+      <button type="submit" class="auth-btn">Sign Up</button>
+    </form>
   </div>
 
-  <!-- Main Content -->
-  <div class="container">
-    <h1>Snaptalk</h1>
-    <div class="btn-container">
-      <a href="achat.html" class="btn">Teen Chat (13–17)</a>
-      <a href="chat.html" class="btn">Adult Chat (18+)</a>
-    </div>
-  </div>
+  <!-- ✅ Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script type="module">
+    // === ✅ Initialize Firebase ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+      authDomain: "snaptalk-17f6d.firebaseapp.com",
+      projectId: "snaptalk-17f6d",
+      storageBucket: "snaptalk-17f6d.appspot.com",
+      messagingSenderId: "592763376854",
+      appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const form = document.getElementById('signupForm');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+
+      const nickname = document.getElementById('nickname').value.trim();
+      const gender = document.getElementById('gender').value;
+      const age = parseInt(document.getElementById('age').value);
+      const lifestyle = document.getElementById('lifestyle').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (isNaN(age) || age < 13) {
+        alert('You must be at least 13 years old.');
+        return;
+      }
+
+      let location = 'any';
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        location = data.country_code.toLowerCase();
+      } catch (err) {
+        console.warn('Could not fetch location, defaulting to any.');
+      }
+
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = cred.user.uid;
+
+        await db.collection('users').doc(uid).set({
+          nickname,
+          gender,
+          age,
+          lifestyle,
+          location,
+          email
+        });
+
+        localStorage.setItem('nickname', nickname);
+        localStorage.setItem('gender', gender);
+        localStorage.setItem('age', age);
+        localStorage.setItem('lifestyle', lifestyle);
+        localStorage.setItem('location', location);
+
+        if (age >= 13 && age <= 17) {
+          window.location.href = 'aachat.html';
+        } else if (age >= 18) {
+          window.location.href = 'cchat.html';
+        } else {
+          alert('Invalid age.');
+        }
+
+      } catch (err) {
+        console.error('❌ Error creating account:', err);
+        alert(err.message);
+      }
+    };
+  </script>
 
 </body>
 </html>

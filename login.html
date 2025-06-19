@@ -1,184 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snaptalk - Login</title>
-    
-    <!-- Firebase SDK -->
-    <script type="module">
-        // ✅ Import Firebase (Modular Syntax)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js"; // Firestore import
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snaptalk - Video Calling</title>
+  <style>
+    /* General Styling */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #004aad);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-        // ✅ Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-            authDomain: "snaptalk-17f6d.firebaseapp.com",
-            projectId: "snaptalk-17f6d",
-            storageBucket: "snaptalk-17f6d.appspot.com",
-            messagingSenderId: "592763376854",
-            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-            measurementId: "G-BJ36XXEJQ3"
-        };
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      text-align: center;
+    }
 
-        // ✅ Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        const db = getFirestore(app);
+    h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #1db9ff;
+      margin-bottom: 20px;
+    }
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            const errorMessage = document.getElementById("error-message");
+    p {
+      font-size: 1.2rem;
+      color: #e0e0e0;
+      margin-bottom: 40px;
+    }
 
-            // ✅ Handle Email & Password Login
-            document.getElementById("login-form").addEventListener("submit", async (event) => {
-                event.preventDefault();
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
 
-                let email = document.getElementById("email").value.trim();
-                let password = document.getElementById("password").value.trim();
-                errorMessage.textContent = "";
+    button {
+      padding: 15px 30px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-                try {
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
+    .start-call-btn {
+      background-color: #1db9ff;
+      color: #fff;
+    }
 
-                    // Check if the user is banned
-                    const userRef = doc(db, "users", user.uid);
-                    const userDoc = await getDoc(userRef);
+    .start-call-btn:hover {
+      background-color: #0094cc;
+    }
 
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        if (userData.banned) {
-    window.location.href = "banned.html";
-    return;
-}
-                           
-                        }
-                    }
+    .filters-btn {
+      background-color: #252525;
+      color: #1db9ff;
+      border: 2px solid #1db9ff;
+    }
 
-                    alert("Login successful! Redirecting...");
-                    window.location.href = "home.html"; // ✅ Redirect to Chat Page
+    .filters-btn:hover {
+      background-color: #1e1e2f;
+      color: #0094cc;
+      border-color: #0094cc;
+    }
 
-                } catch (error) {
-                    errorMessage.textContent = getFriendlyError(error.code);
-                }
-            });
+    /* Auth Form Styles */
+    .auth-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      margin: 0 auto;
+      text-align: center;
+    }
 
-            // ✅ Handle Google Sign-In (Auto-check for redirect result)
-            try {
-                const result = await getRedirectResult(auth);
-                if (result?.user) {
-                    alert("Google Sign-In successful! Redirecting...");
-                    window.location.href = "home.html";
-                }
-            } catch (error) {
-                errorMessage.textContent = getFriendlyError(error.code);
-            }
+    input {
+      padding: 12px;
+      font-size: 1rem;
+      width: 100%;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 10px;
+    }
 
-            // ✅ Handle Google Sign-In Button (Popup for Desktop, Redirect for Mobile)
-            document.getElementById("google-signin").addEventListener("click", async () => {
-                try {
-                    if (window.innerWidth <= 768) {
-                        // ✅ Use Redirect for Mobile
-                        signInWithRedirect(auth, provider);
-                    } else {
-                        // ✅ Use Popup for Desktop
-                        await signInWithPopup(auth, provider);
-                        alert("Google Sign-In successful! Redirecting...");
-                        window.location.href = "home.html";
-                    }
-                } catch (error) {
-                    errorMessage.textContent = getFriendlyError(error.code);
-                }
-            });
+    .auth-btn {
+      padding: 15px 30px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      background-color: #1db9ff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
 
-            // ✅ Friendly Firebase Error Messages
-            function getFriendlyError(code) {
-                const errors = {
-                    "auth/user-not-found": "No account found with this email.",
-                    "auth/wrong-password": "Incorrect password. Try again.",
-                    "auth/invalid-email": "Please enter a valid email.",
-                    "auth/popup-closed-by-user": "Popup closed before sign-in.",
-                    "auth/cancelled-popup-request": "Multiple popups blocked.",
-                    "auth/network-request-failed": "Check your internet connection.",
-                    "auth/popup-blocked": "Popup blocked! Try enabling popups in browser settings.",
-                    "auth/account-exists-with-different-credential": "Email already linked to another account.",
-                    "auth/too-many-requests": "Too many attempts. Try again later.",
-                };
-                return errors[code] || "Login failed. Try again.";
-            }
-        });
-    </script>
+    .auth-btn:hover {
+      background-color: #0094cc;
+    }
 
-    <style>
-        body {
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            color: #00ffcc;
-        }
-        .container {
-            max-width: 400px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
-        }
-        h1 { color: #00ffcc; }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
-            background: #1b1b2f;
-            color: #00ffcc;
-            font-size: 16px;
-        }
-        input { border: 1px solid #00ffcc; }
-        button {
-            background-color: #00ffcc;
-            color: #1b1b2f;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        button:hover { background-color: #00d4ff; }
-        .error { color: #ff4d4d; font-size: 14px; }
-        .google-btn {
-            background-color: #db4437;
-            color: white;
-            font-weight: bold;
-        }
-        .google-btn:hover { background-color: #c1351d; }
-    </style>
+    .auth-toggle {
+      font-size: 0.9rem;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    footer {
+      margin-top: 60px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    footer a {
+      color: #1db9ff;
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Snaptalk Login</h1>
-        
-        <!-- Login Form -->
-        <form id="login-form">
-            <input type="email" id="email" placeholder="Enter Email" required>
-            <input type="password" id="password" placeholder="Enter Password" required>
-            <button type="submit">Login</button>
-        </form>
+  <div class="container">
+    <!-- Auth Container -->
+    <div class="auth-container" id="auth-container">
+      <h1 id="auth-heading">Login</h1>
+      <p id="auth-description">Enter your credentials to login or sign up!</p>
 
-        <!-- Google Sign In Button -->
-     
+      <div id="auth-form">
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Password" />
+        <button class="auth-btn" id="auth-btn">Login</button>
+      </div>
 
-
-
-        <a href="index.html">sign up</a>
-
-        <div id="error-message" class="error"></div>
+      <p class="auth-toggle" id="auth-toggle">Don't have an account? Sign up</p>
     </div>
+
+    <!-- Video Call Section -->
+    <div id="video-call-section" style="display: none;">
+      <h1>Welcome to Snaptalk</h1>
+      <p>The ultimate platform for high-quality video calls with advanced connectivity. Connect with friends and family seamlessly!</p>
+      <div class="button-group">
+        <button class="start-call-btn" onclick="startCall()">Start Video Call</button>
+        <button class="filters-btn" onclick="goToFilters()">Set Filters</button>
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2025 Snaptalk. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.2.0/firebase-analytics.js"></script>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+  authDomain: "snaptalk-17f6d.firebaseapp.com",
+  projectId: "snaptalk-17f6d",
+  storageBucket: "snaptalk-17f6d.firebasestorage.app",
+  messagingSenderId: "592763376854",
+  appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+};
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Toggle between login and signup
+    const authToggle = document.getElementById('auth-toggle');
+    const authForm = document.getElementById('auth-form');
+    const authBtn = document.getElementById('auth-btn');
+    const authHeading = document.getElementById('auth-heading');
+    const authDescription = document.getElementById('auth-description');
+    const videoCallSection = document.getElementById('video-call-section');
+    const authContainer = document.getElementById('auth-container');
+
+    // Toggle to Sign Up form
+    authToggle.addEventListener('click', () => {
+      if (authHeading.innerText === 'Login') {
+        authHeading.innerText = 'Sign Up';
+        authDescription.innerText = 'Create a new account';
+        authBtn.innerText = 'Sign Up';
+        authToggle.innerText = 'Already have an account? Login';
+      } else {
+        authHeading.innerText = 'Login';
+        authDescription.innerText = 'Enter your credentials to login';
+        authBtn.innerText = 'Login';
+        authToggle.innerText = "Don't have an account? Sign up";
+      }
+    });
+
+    // Handle Login / Signup
+    authBtn.addEventListener('click', () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (authHeading.innerText === 'Login') {
+        // Login
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => {
+            videoCallSection.style.display = 'block';
+            authContainer.style.display = 'none';
+          })
+          .catch((error) => {
+            alert('Error: ' + error.message);
+          });
+      } else {
+        // Sign Up
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => {
+            videoCallSection.style.display = 'block';
+            authContainer.style.display = 'none';
+          })
+          .catch((error) => {
+            alert('Error: ' + error.message);
+          });
+      }
+    });
+
+    // Start Video Call
+    function startCall() {
+      alert("Starting a video call... This feature will redirect to the video calling interface!");
+      // Redirect to your video call interface here
+      window.location.href = "videocall.html";
+    }
+
+    // Go to Filters
+    function goToFilters() {
+      window.location.href = "st2.html";
+    }
+  </script>
 </body>
 </html>

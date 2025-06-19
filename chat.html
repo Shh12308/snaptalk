@@ -2,95 +2,345 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Random Video Chat</title>
-  <link rel="stylesheet" href="chat.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adult SnapTalk</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: #000; overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #videoContainer {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+
+    video {
+      flex: 1;
+      width: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+
+    #localVideo {
+      transform: scaleX(-1);
+    }
+
+    #separator {
+      height: 2px;
+      background: #fff;
+      width: 100%;
+      z-index: 2;
+    }
+
+    #preferences {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px 20px;
+      border-radius: 8px;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 20;
+    }
+
+    #preferences.visible {
+      transform: translate(-50%, 20px);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #preferences label {
+      display: block;
+      margin: 8px 0;
+    }
+
+    #preferences select,
+    #preferences input {
+      margin-left: 5px;
+    }
+
+    #preferences button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    #preferences button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #chatContainer {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 90%;
+      max-width: 400px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      padding: 10px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(6px);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+      z-index: 15;
+    }
+
+    #chatContainer.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    #chatBox {
+      height: 150px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 5px;
+      margin-bottom: 5px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    #chatInputRow {
+      display: flex;
+      gap: 5px;
+    }
+
+    #chatInput {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      padding: 5px;
+    }
+
+    #chatInput::placeholder {
+      color: #ccc;
+    }
+
+    #sendChatBtn,
+    #emojiBtn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    #sendChatBtn:hover,
+    #emojiBtn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #typingIndicator {
+      font-size: 0.85em;
+      color: #aaa;
+      margin-top: 5px;
+    }
+
+    #initialButtons {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 15;
+    }
+
+    #controls button {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #controls button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #controls svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    .overlay {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      text-align: center;
+      z-index: 50;
+    }
+
+    #searchingOverlay {
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+    }
+
+    #partnerInfoOverlay {
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 20px 30px;
+      border-radius: 10px;
+      font-size: 1.2em;
+    }
+
+    #togglePrefsBtnTop {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 25;
+    }
+
+    #togglePrefsBtnTop:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    #banOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.95);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      z-index: 99999;
+    }
+
+    #banOverlay p {
+      font-size: 0.8em;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <div id="videoContainer">
 
-    <!-- Remote & Local Videos (hidden initially) -->
-    <div id="remote-player" class="hidden">
-      <video id="remoteVideo" autoplay playsinline></video>
-    </div>
-    <div id="local-player" class="hidden">
-      <video id="localVideo" autoplay muted playsinline></video>
-    </div>
+<!-- ✅ Toggle Preferences Button -->
+<button id="togglePrefsBtnTop" aria-label="Toggle Preferences">⚙️ Preferences</button>
 
-    <!-- Top Right Buttons (Block & End Call) - hidden -->
-    <div id="topRightButtons" class="hidden">
-      <button id="blockBtn">🚫</button>
-      <button id="endCallBtn">❌</button>
-    </div>
+<!-- ✅ Preferences Panel -->
+<div id="preferences">
+  <label>
+    Partner Gender:
+    <select id="genderSelect">
+      <option value="any">Any</option>
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+    </select>
+  </label>
+  <label>
+    Partner Location:
+    <select id="locationSelect">
+      <option value="any">Any</option>
+      <option value="us">US</option>
+      <option value="uk">UK</option>
+      <option value="in">India</option>
+    </select>
+  </label>
+  <label>
+    Preferred Language:
+    <select id="languageSelect">
+      <option value="any">Any</option>
+      <option value="en">English</option>
+      <option value="es">Spanish</option>
+      <option value="fr">French</option>
+    </select>
+  </label>
+  <label>
+    Hobbies/Interests:
+    <input type="text" id="interestsInput" placeholder="Enter hobbies or interests">
+  </label>
+  <button id="savePrefsBtn">✅ Save Preferences</button>
+</div>
 
-    <!-- Preferences Panel (hidden) -->
-    <div id="preferencesPanel" class="hidden">
-      <label>Preferred Age:
-        <select id="prefPreferredAge">
-          <option value="teen">13–17</option>
-          <option value="adult">18+</option>
-          <option value="any">Any</option>
-        </select>
-      </label>
-      <label>Gender:
-        <select id="prefGender">
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="any">Any</option>
-        </select>
-      </label>
-      <label>Location:
-        <select id="prefLocation">
-          <!-- Populated dynamically -->
-        </select>
-      </label>
-      <label>Topics:
-        <input type="text" id="prefTopics" placeholder="Interests, comma separated" />
-      </label>
-      <button id="savePrefsBtn">Save</button>
-    </div>
+<!-- ✅ Video Container -->
+<div id="videoContainer">
+  <video id="remoteVideo" autoplay playsinline></video>
+  <div id="separator"></div>
+  <video id="localVideo" autoplay playsinline muted></video>
+</div>
 
-    <!-- Initial Buttons (Start, Preferences, Home) - visible -->
-    <div id="initialButtons">
-      <button id="startBtn">Start</button>
-      <button id="togglePrefsBtn">Preferences</button>
-      <button id="homeBtn">Home</button>
-    </div>
-
-    <!-- Call Buttons (Skip) - hidden -->
-    <div id="callButtons" class="hidden">
-      <button id="skipBtn">Skip</button>
-    </div>
-
-    <!-- Chat UI - hidden -->
-    <div id="chatBox" class="hidden">
-      <div id="chatMessages"></div>
-      <div id="typingIndicator" class="hidden">Partner is typing...</div>
-      <div id="chatControls">
-        <input type="text" id="chatInput" placeholder="Type a message..." />
-        <button id="emojiBtn">😊</button>
-        <button id="chatSendBtn">Send</button>
-      </div>
-    </div>
-
-    <!-- Ban Overlay - hidden -->
-    <div id="banOverlay" class="hidden">
-      <div class="banned">
-        <h1>You have been banned</h1>
-        <div class="timer">Time Remaining: 100:00</div>
-        <div class="rules">
-          <p>Reason: Minor detected.</p>
-          <p><span class="highlight">Repeat offenses may result in permanent ban.</span></p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Status Text - hidden -->
-    <div id="statusText" class="hidden">Ready to start!</div>
-
+<!-- ✅ Chat Container -->
+<div id="chatContainer" class="hidden">
+  <div id="chatBox"></div>
+  <div id="chatInputRow">
+    <input id="chatInput" type="text" placeholder="Type a message...">
+    <button id="emojiBtn" aria-label="Insert Emoji">😊</button>
+    <button id="sendChatBtn" aria-label="Send Message">Send</button>
   </div>
+  <div id="typingIndicator"></div>
+</div>
 
-  <!-- Socket.io & JS -->
+<!-- ✅ Controls -->
+<div id="controls">
+  <div id="initialButtons">
+    <button id="startBtn" aria-label="Start">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+  </div>
+  <div id="callButtons" class="hidden">
+    <button id="skipBtn" aria-label="Skip">
+      <svg viewBox="0 0 24 24"><path d="M4 4v16l12-8zM16 4v16h2V4z"/></svg>
+    </button>
+    <button id="endCallBtn" aria-label="End Call">
+      <svg viewBox="0 0 24 24"><path d="M21 7.5a16.88 16.88 0 00-9-2.5 16.88 16.88 0 00-9 2.5l2 2.5A13.9 13.9 0 0112 8a13.9 13.9 0 017 2zM3 10l2 2.5a13.9 13.9 0 007 2 13.9 13.9 0 007-2L21 10a16.88 16.88 0 00-9-2 16.88 16.88 0 00-9 2z"/></svg>
+    </button>
+    <button id="switchCamBtn" aria-label="Switch Camera">
+      <svg viewBox="0 0 24 24"><path d="M20 4h-3.17l-1.83-2H8L6.17 4H4c-1.11 0-1.99.89-1.99 2L2 18a2 2 0 002 2h16a2 2 0 002-2V6c0-1.11-.89-2-2-2zm0 14H4V6h3.05l1.83-2h6.24l1.83 2H20v12zM12 8v4l4-4h-4zm0 8v-4l-4 4h4z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ✅ Overlays -->
+<div id="searchingOverlay" class="overlay hidden">🔍 Searching for a partner...</div>
+<div id="partnerInfoOverlay" class="overlay hidden"></div>
+<div id="banOverlay" class="hidden">
+  🚫 Minor detected: You are banned for 72 hours!
+  <p id="banCountdown"></p>
+</div>
+
+  <!-- ✅ Scripts -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="achat.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.js"></script>
+<script src="https://ipinfo.io?callback=onIPReady"></script>
+  <script src="achat.js"></script>
+ 
 </body>
 </html>

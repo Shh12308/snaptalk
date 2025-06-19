@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Snaptalk - Home</title>
+
+    <!-- Google AdSense Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5847677612423434" crossorigin="anonymous"></script> 
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+    <style>
+        /* ========== Global Reset ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ========== Body Styling ========== */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(120deg, #4b6cb7, #182848, #2b5876);
+    background-size: 200% 200%;
+    animation: gradientShift 20s ease infinite;
+    padding-top: 20px;
+    color: #f0f3f7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ========== Main Container ========== */
+.container {
+    text-align: center;
+    color: #e9f0f7cc;
+    padding: 25px 30px;
+    background: rgba(23, 32, 42, 0.85);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(43, 88, 118, 0.3);
+    max-width: 450px;
+    width: 90%;
+    margin-top: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.container h1 {
+    font-size: 40px;
+    margin-bottom: 18px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px #72bcd4aa;
+}
+
+.container p {
+    font-size: 19px;
+    margin-bottom: 20px;
+    font-weight: 400;
+    text-shadow: 0 0 8px #547a9c88;
+}
+
+/* ========== User Age Text ========== */
+#user-age {
+    font-size: 16px;
+    font-weight: 500;
+    color: #a0c1d9cc;
+    text-shadow: 0 0 5px #517ea3bb;
+    margin-top: -12px;
+    margin-bottom: 15px;
+}
+
+/* ========== Button Styles ========== */
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.btn {
+    padding: 14px 28px;
+    font-size: 20px;
+    width: 250px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #e0eaff;
+    border: none;
+    border-radius: 12px;
+    transition: all 0.35s ease-in-out;
+    box-shadow: 0 6px 18px rgba(37, 117, 252, 0.45);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    user-select: none;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #2575fc, #6a11cb);
+    transform: scale(1.07);
+    box-shadow: 0 10px 28px rgba(38, 103, 254, 0.6);
+}
+
+/* ========== Footer ========== */
+footer {
+    background: rgba(23, 32, 42, 0.95);
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 15vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 2px solid #2575fc;
+    box-shadow: 0 -3px 8px rgba(37, 117, 252, 0.25);
+    z-index: 100;
+    padding: 0;
+}
+
+footer a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    height: 100%;
+    flex: 1;
+}
+
+footer svg {
+    width: 22px;
+    height: 22px;
+    fill: #aac7ffcc;
+    transition: fill 0.3s ease-in-out;
+}
+
+footer a:hover svg {
+    fill: #72bcd4;
+}
+
+footer .donate-icon svg {
+    fill: #ff4d4d;
+}
+
+footer .donate-icon:hover svg {
+    fill: #ff7b7b;
+}
+
+footer a span {
+    font-size: 11px;
+    color: #cdd7e0cc;
+    margin-top: 3px;
+    font-weight: 500;
+}
+
+/* ========== Modal Styles ========== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 14, 24, 0.85);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: #202c45;
+    border-radius: 16px;
+    padding: 26px;
+    max-width: 550px;
+    width: 80%;
+    box-shadow: 0 6px 18px rgba(37, 117, 252, 0.3);
+    text-align: center;
+    color: #c7d3f2;
+}
+
+.close-btn {
+    background: #2575fc;
+    color: white;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+    font-weight: 700;
+}
+
+.close-btn:hover {
+    background: #155fcc;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .container {
+        width: 85%;
+        padding: 20px;
+    }
+
+    .container h1 {
+        font-size: 34px;
+    }
+
+    .container p {
+        font-size: 17px;
+    }
+
+    #user-age {
+        font-size: 15px;
+    }
+
+    .btn {
+        font-size: 18px;
+        width: 220px;
+        padding: 12px 24px;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 14px;
+        padding: 12px 0;
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .container h1 {
+        font-size: 30px;
+    }
+
+    .container p {
+        font-size: 16px;
+    }
+
+    #user-age {
+        font-size: 14px;
+    }
+
+    .btn {
+        font-size: 16px;
+        width: 200px;
+        padding: 10px 20px;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 12px;
+        padding: 10px 0;
+        height: auto;
+    }
+
+    footer svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    footer a span {
+        font-size: 10px;
+    }
+}
+    </style>
+</head>
+<body>
+
+
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Welcome to Snaptalk!</h1>
+        <p>Connect instantly with new people. Choose between video or text chat.</p>
+
+        <p id="user-status">Checking login status...</p>
+        <p id="user-age"></p>
+        <p id="online-users">Online Users: 0</p>
+        <div class="btn-container">
+            <button class="btn" id="video-chat"><a href="chat.html" style="color: white; text-decoration: none;">Start Video Chat</a></button>
+            <button class="btn" id="text-chat"><a href="text.html" style="color: white; text-decoration: none;">Start Text Chat</a></button>
+        
+        </div>
+    </div>
+
+  <ins class="adsbygoogle"
+       style="display:block; text-align:center;"
+       data-ad-client="ca-pub-5847677612423434"
+       data-ad-slot="7864868911"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+
+        <!-- Footer -->
+   <footer class="footer-icons">
+    <a href="profile.html" title="Profile">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 12c2.7 0 4.5-1.8 4.5-4.5S14.7 3 12 3 7.5 4.8 7.5 7.5 9.3 12 12 12zm0 2c-3 0-9 1.5-9 4.5V21h18v-2.5c0-3-6-4.5-9-4.5z" />
+        </svg>
+    </a>
+    <a href="settings.html" title="Settings">
+        <svg viewBox="0 0 24 24">
+            <path d="M19.14,12.94a7.07,7.07,0,0,0,0-1.88l2.11-1.65a.5.5,0,0,0,.12-.63l-2-3.46a.5.5,0,0,0-.6-.22l-2.49,1a6.87,6.87,0,0,0-1.63-.94l-.38-2.65A.5.5,0,0,0,14,3H10a.5.5,0,0,0-.5.42L9.12,6.07a6.87,6.87,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.5.5,0,0,0,.12.63L4.86,11.06a7.07,7.07,0,0,0,0,1.88L2.75,14.59a.5.5,0,0,0-.12.63l2,3.46a.5.5,0,0,0,.6.22l2.49-1a6.87,6.87,0,0,0,1.63.94l.38,2.65A.5.5,0,0,0,10,21h4a.5.5,0,0,0,.5-.42l.38-2.65a6.87,6.87,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.5.5,0,0,0-.12-.63ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
+        </svg>
+    </a>
+    <a href="contact.html" title="Contact"> contact
+    </a>
+    <a href="donate.html" class="donate-icon" title="Donate">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.41 4.42 3 7.5 3c1.74 0 
+                3.41 1.01 4.5 2.09C13.09 4.01 14.76 3 16.5 3 
+                19.58 3 22 5.41 22 8.5c0 3.78-3.4 
+                6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+    </a>
+</footer>
+
+    <script>
+        // Get modal elements
+        const disclaimerModal = document.getElementById('disclaimer-modal');
+        const disclaimerBtn = document.getElementById('disclaimer-btn');
+        const closeModal = document.getElementById('close-modal');
+
+        disclaimerBtn.addEventListener('click', () => {
+            disclaimerModal.style.display = 'flex';
+        });
+
+        closeModal.addEventListener('click', () => {
+            disclaimerModal.style.display = 'none';
+        });
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+            authDomain: "snaptalk-17f6d.firebaseapp.com",
+            projectId: "snaptalk-17f6d",
+            storageBucket: "snaptalk-17f6d.appspot.com",
+            messagingSenderId: "592763376854",
+            appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+            measurementId: "G-BJ36XXEJQ3"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const userStatus = document.getElementById("user-status");
+        const onlineUsersDisplay = document.getElementById("online-users");
+        const userAgeDisplay = document.getElementById("user-age");
+
+        const onlineUsersRef = db.collection("meta").doc("onlineUsers");
+
+        // Update online user count
+        async function updateOnlineUsers(change) {
+            const doc = await onlineUsersRef.get();
+            let onlineCount = doc.exists ? doc.data().count : 0;
+
+            if (change === "increase") {
+                onlineUsersRef.set({ count: onlineCount + 1 }, { merge: true });
+            } else if (change === "decrease" && onlineCount > 0) {
+                onlineUsersRef.set({ count: onlineCount - 1 }, { merge: true });
+            }
+        }
+
+        // Listen to real-time changes in user count
+        onlineUsersRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                onlineUsersDisplay.innerText = `Online Users: ${doc.data().count}`;
+            }
+        });
+
+        // Listen to auth state and show user info
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                userStatus.innerText = `Logged in as ${user.displayName || "User"}`;
+
+                // Fetch age from Firestore user profile
+                try {
+                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    if (userDoc.exists && userDoc.data().age) {
+                        userAgeDisplay.innerText = `Age: ${userDoc.data().age}`;
+                    } else {
+                        userAgeDisplay.innerText = `Age: Not specified`;
+                    }
+
+                    updateOnlineUsers("increase");
+
+                    // Handle cleanup on unload
+                    window.addEventListener("beforeunload", () => {
+                        updateOnlineUsers("decrease");
+                    });
+                } catch (err) {
+                    console.error("Failed to fetch user age:", err);
+                    userAgeDisplay.innerText = "Error retrieving age.";
+                }
+            } else {
+                userStatus.innerText = "Not logged in. Please sign in.";
+                userAgeDisplay.innerText = "";
+            }
+        });
+    </script>
+</body>
+</html>

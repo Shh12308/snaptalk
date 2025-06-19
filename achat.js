@@ -1,354 +1,328 @@
-// === Imports ===
-import { fetchGeoData } from './geolocation.js';
+// === Firebase ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// === Socket for WebRTC signaling only ===
+const firebaseConfig = {
+  apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
+  authDomain: "snaptalk-17f6d.firebaseapp.com",
+  projectId: "snaptalk-17f6d",
+  storageBucket: "snaptalk-17f6d.firebasestorage.app",
+  messagingSenderId: "592763376854",
+  appId: "1:592763376854:web:c876f67dc5ea87080ce577",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+
+// === SOCKET.IO ===
 const socket = io('https://shh1-2.onrender.com');
 
-// === Tencent IM ===
-// ✅ Replace with your real Tencent Cloud IM SDK AppID
-const tim = TIM.create({ SDKAppID: YOUR_TENCENT_APP_ID });
-tim.setLogLevel(0);
-tim.registerPlugin({ 'emoji': TIMEmoji });
-
-// === Secure userSig ===
-async function getUserSigFromServer(userID) {
-  const res = await fetch(`/api/getUserSig?uid=${encodeURIComponent(userID)}`);
-  if (!res.ok) throw new Error('Failed to fetch userSig');
-  const data = await res.json();
-  return data.userSig;
-}
-
-// === Auth (Custom) ===
-let currentUser = null;
-async function checkAuth() {
-  const res = await fetch('/api/me');
-  if (!res.ok) {
-    location.href = 'login.html';
-    return;
-  }
-  currentUser = await res.json();
-  const userSig = await getUserSigFromServer(currentUser.uid);
-  await tim.login({ userID: currentUser.uid, userSig });
-}
-
-// === WebRTC ===
-let localStream = null;
-let peerConnection = null;
-const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
-// === UI ===
-const initialUI = document.getElementById('initialButtons');
-const callUI = document.getElementById('callButtons');
-const topUI = document.getElementById('topRightButtons');
-const status = document.getElementById('statusText');
-
-const localVideo = document.getElementById('localVideo');
+// === DOM ===
 const remoteVideo = document.getElementById('remoteVideo');
+const localVideo = document.getElementById('localVideo');
 
+const togglePrefsBtn = document.getElementById('togglePrefsBtnTop');
+const preferencesPanel = document.getElementById('preferences');
+const savePrefsBtn = document.getElementById('savePrefsBtn');
+
+const startBtn = document.getElementById('startBtn');
+const skipBtn = document.getElementById('skipBtn');
+const endCallBtn = document.getElementById('endCallBtn');
+const blockBtn = document.getElementById('blockBtn');
+const switchCamBtn = document.getElementById('switchCamBtn');
+
+const genderSelect = document.getElementById('genderSelect');
+const locationSelect = document.getElementById('locationSelect');
+
+const initialButtons = document.getElementById('initialButtons');
+const callButtons = document.getElementById('callButtons');
+
+const chatContainer = document.getElementById('chatContainer');
 const chatBox = document.getElementById('chatBox');
-const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
-const chatSendBtn = document.getElementById('chatSendBtn');
+const sendChatBtn = document.getElementById('sendChatBtn');
+const emojiBtn = document.getElementById('emojiBtn');
 const typingIndicator = document.getElementById('typingIndicator');
 
-let filters = {};
-let partnerUid = null;
-let countdownTimer = null;
+const searchingOverlay = document.getElementById('searchingOverlay');
+const banOverlay = document.getElementById('banOverlay');
 
-let queueUnsub = null;
+// === STATE ===
+let localStream;
+let peerConnection;
+let partnerSocketId;
+let typingTimeout;
+let usingFrontCamera = true;
+let findingMatch = false;
+let debounce = false;
 
-// === Init ===
-(async () => {
-  await checkAuth();
-  const geo = await fetchGeoData();
-  populateCountries(geo.country);
+const iceConfig = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
 
-  document.getElementById('startBtn').onclick = startMatchmaking;
-  document.getElementById('skipBtn').onclick = skipMatch;
-  document.getElementById('endCallBtn').onclick = endCall;
-  document.getElementById('blockBtn').onclick = blockUser;
-  document.getElementById('homeBtn').onclick = () => location.href = 'home.html';
-  document.getElementById('togglePrefsBtn').onclick = () => {
-    document.getElementById('preferencesPanel').classList.toggle('hidden');
-  };
-  document.getElementById('savePrefsBtn').onclick = () => {
-    localStorage.setItem('chat_interests', document.getElementById('prefTopics').value.trim());
-    alert("Preferences saved.");
-  };
+const blockedIds = JSON.parse(localStorage.getItem('blockedIds') || '[]');
 
-  chatSendBtn.onclick = sendChat;
-  chatInput.onkeypress = e => {
-    if (e.key === 'Enter') sendChat();
-    else sendTypingIndicator();
-  };
+// === AUTH ===
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    console.log('✅ Firebase Auth:', user.uid);
 
-  showInitial();
-})();
-
-// === Populate Countries ===
-function populateCountries(country) {
-  const sel = document.getElementById('prefLocation');
-  ['United Kingdom', 'United States', 'Canada', 'Australia'].forEach(c => {
-    const o = new Option(c, c);
-    if (c === country) o.selected = true;
-    sel.add(o);
-  });
-}
-
-function getFilters() {
-  return {
-    age: document.getElementById('prefPreferredAge').value,
-    gender: document.getElementById('prefGender').value,
-    location: document.getElementById('prefLocation').value,
-    interests: localStorage.getItem('chat_interests') || '',
-  };
-}
-
-function showInitial() {
-  initialUI.style.display = 'flex';
-  callUI.style.display = 'none';
-  topUI.style.display = 'none';
-  hideChat();
-  status.textContent = "Ready to start!";
-}
-
-function showInCall() {
-  initialUI.style.display = 'none';
-  callUI.style.display = 'flex';
-  topUI.style.display = 'flex';
-  showChat();
-}
-
-// === Matchmaking ===
-async function startMatchmaking(e) {
-  if (e) e.preventDefault();
-  if (!currentUser) return alert("You must be logged in.");
-
-  showInCall();
-  cancelCountdown();
-
-  if (queueUnsub) {
-    queueUnsub();
-    queueUnsub = null;
-  }
-
-  filters = getFilters();
-
-  // Tell backend to enqueue user with filters
-  const res = await fetch('/api/enqueue', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uid: currentUser.uid, ...filters }),
-  });
-
-  if (!res.ok) {
-    status.textContent = "Failed to join queue.";
-    return;
-  }
-
-  // Poll for matches every 3s
-  queueUnsub = setInterval(async () => {
-    const matchRes = await fetch(`/api/checkMatch?uid=${currentUser.uid}`);
-    if (matchRes.ok) {
-      const matchData = await matchRes.json();
-      if (matchData.roomId && matchData.peer) {
-        clearInterval(queueUnsub);
-        queueUnsub = null;
-        startCountdown(() => onMatch(matchData.roomId, matchData.peer));
-      } else {
-        status.textContent = "Searching for a match...";
-      }
+    // Load preferences from Firestore
+    const docSnap = await getDoc(doc(db, "users", user.uid));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      genderSelect.value = data.gender || localStorage.getItem('gender') || 'any';
+      locationSelect.value = data.location || localStorage.getItem('location') || 'any';
+    } else {
+      genderSelect.value = localStorage.getItem('gender') || 'any';
+      locationSelect.value = localStorage.getItem('location') || 'any';
     }
-  }, 3000);
-
-  status.textContent = "Searching for a match...";
-}
-
-function startCountdown(callback) {
-  cancelCountdown();
-  let count = 5;
-  status.textContent = `Match found! Connecting in ${count}...`;
-  countdownTimer = setInterval(() => {
-    count--;
-    status.textContent = `Match found! Connecting in ${count}...`;
-    if (count <= 0) {
-      cancelCountdown();
-      callback();
-    }
-  }, 1000);
-}
-
-function cancelCountdown() {
-  if (countdownTimer) {
-    clearInterval(countdownTimer);
-    countdownTimer = null;
+  } else {
+    signInAnonymously(auth);
   }
-}
+});
 
-async function onMatch(roomId, peer) {
-  partnerUid = peer.uid;
-  status.textContent = `Connected with ${peer.displayName || 'Partner'} from ${peer.location || 'Unknown'}!`;
-  await startConnection(roomId, true);
-}
+// === GEOLOCATION AUTOFILL ===
+window.onIPReady = (ip, info) => {
+  console.log('IP Ready:', info.country);
+  if (info.country && info.country.length === 2) {
+    const countryCode = info.country.toLowerCase();
+    locationSelect.value = countryCode;
+    localStorage.setItem('location', countryCode);
+  }
+};
 
-// === WebRTC ===
-async function startConnection(roomId, isCaller) {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+// === MEDIA ===
+async function startLocalStream() {
+  if (localStream) return;
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
+    audio: true
+  });
   localVideo.srcObject = localStream;
+}
 
-  peerConnection = new RTCPeerConnection(config);
+// === BUTTONS ===
+// === BUTTONS ===
+togglePrefsBtn.onclick = () => {
+  preferencesPanel.classList.toggle('hidden');
+};
 
-  peerConnection.onicecandidate = e => {
-    if (e.candidate) {
-      socket.emit('signal', { roomId, candidate: e.candidate });
+savePrefsBtn.onclick = async () => {
+  localStorage.setItem('gender', genderSelect.value);
+  localStorage.setItem('location', locationSelect.value);
+  if (currentUser) {
+    await setDoc(doc(db, "users", currentUser.uid), {
+      gender: genderSelect.value,
+      location: locationSelect.value
+    });
+  }
+  preferencesPanel.classList.add('hidden');
+
+  if (findingMatch) {
+    endCall();
+    findMatch();
+  }
+};
+
+startBtn.onclick = async () => {
+  preferencesPanel.classList.add('hidden'); // ✅ AUTO-HIDE
+  try {
+    await startLocalStream();
+    await findMatch();
+    initialButtons.classList.add('hidden');
+    callButtons.classList.remove('hidden');
+    chatContainer.classList.remove('hidden');
+  } catch (err) {
+    console.error('Start error:', err);
+    alert('Could not start video chat.');
+  }
+};
+
+skipBtn.onclick = async () => {
+  preferencesPanel.classList.add('hidden'); // ✅ AUTO-HIDE
+  if (debounce) return;
+  debounce = true;
+  try {
+    endCall();
+    await findMatch();
+  } finally {
+    setTimeout(() => debounce = false, 1000);
+  }
+};
+
+endCallBtn.onclick = () => {
+  preferencesPanel.classList.add('hidden'); // ✅ AUTO-HIDE
+  endCall();
+  initialButtons.classList.remove('hidden');
+  callButtons.classList.add('hidden');
+  chatContainer.classList.add('hidden');
+  searchingOverlay.style.display = 'none';
+};
+
+blockBtn.onclick = async () => {
+  if (debounce || !partnerSocketId) return;
+  debounce = true;
+  blockedIds.push(partnerSocketId);
+  localStorage.setItem('blockedIds', JSON.stringify(blockedIds));
+  socket.emit('block_user', partnerSocketId);
+  endCall();
+  await findMatch();
+  setTimeout(() => debounce = false, 1000);
+};
+
+switchCamBtn.onclick = async () => {
+  usingFrontCamera = !usingFrontCamera;
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+  await startLocalStream();
+  if (peerConnection && partnerSocketId) {
+    const videoSender = peerConnection.getSenders().find(s => s.track.kind === 'video');
+    if (videoSender) {
+      videoSender.replaceTrack(localStream.getVideoTracks()[0]);
     }
-  };
+  }
+};
 
-  peerConnection.ontrack = e => {
-    remoteVideo.srcObject = e.streams[0];
-  };
+// === CHAT ===
+sendChatBtn.onclick = () => {
+  const msg = chatInput.value.trim();
+  if (msg && partnerSocketId) {
+    socket.emit('chat', { to: partnerSocketId, message: msg });
+    appendChatMessage('You', msg);
+    chatInput.value = '';
+  }
+};
 
-  localStream.getTracks().forEach(track => {
-    peerConnection.addTrack(track, localStream);
-  });
+chatInput.oninput = () => {
+  if (partnerSocketId) socket.emit('typing', { to: partnerSocketId });
+};
 
-  if (isCaller) {
+const picker = new EmojiButton();
+picker.on('emoji', emoji => {
+  chatInput.value += emoji;
+});
+emojiBtn.onclick = () => picker.togglePicker(emojiBtn);
+
+function appendChatMessage(sender, msg) {
+  const p = document.createElement('p');
+  p.innerHTML = `<strong>${sender}:</strong> ${msg}`;
+  chatBox.appendChild(p);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function showTyping() {
+  typingIndicator.innerText = 'Partner is typing...';
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => typingIndicator.innerText = '', 1500);
+}
+
+// === SIGNALING ===
+socket.on('match_found', async ({ socketId }) => {
+  findingMatch = false;
+  searchingOverlay.style.display = 'none';
+  partnerSocketId = socketId;
+  createPeerConnection();
+
+  if (socketId > socket.id) {
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-    socket.emit('signal', { roomId, sdp: offer });
-  }
-}
-
-socket.on('signal', async ({ roomId, sdp, candidate }) => {
-  if (sdp) {
-    if (sdp.type === 'offer') {
-      await startConnection(roomId, false);
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      socket.emit('signal', { roomId, sdp: answer });
-    } else if (sdp.type === 'answer') {
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
-    }
-  } else if (candidate) {
-    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    socket.emit('signal', { to: socketId, data: offer });
   }
 });
 
-// === Chat with Tencent IM ===
-function showChat() {
-  chatBox.classList.remove('hidden');
-}
-function hideChat() {
-  chatBox.classList.add('hidden');
-  chatMessages.innerHTML = '';
-}
+socket.on('signal', async ({ from, data }) => {
+  partnerSocketId = from;
+  if (!peerConnection) createPeerConnection();
 
-function sendChat() {
-  const msg = chatInput.value.trim();
-  if (!msg) return;
-  appendChat('You', msg);
-
-  const message = tim.createTextMessage({
-    to: partnerUid,
-    conversationType: TIM.TYPES.CONV_C2C,
-    payload: { text: msg }
-  });
-
-  tim.sendMessage(message).catch(console.error);
-  chatInput.value = '';
-}
-
-tim.on(TIM.EVENT.MESSAGE_RECEIVED, event => {
-  event.data.forEach(msg => {
-    if (msg.type === TIM.TYPES.MSG_TEXT && msg.from === partnerUid) {
-      appendChat('Partner', msg.payload.text);
-    }
-    if (msg.type === TIM.TYPES.MSG_CUSTOM && msg.payload.data === 'typing') {
-      typingIndicator.classList.remove('hidden');
-      clearTimeout(typingIndicator._timeout);
-      typingIndicator._timeout = setTimeout(() => {
-        typingIndicator.classList.add('hidden');
-      }, 1000);
-    }
-  });
+  if (data.type === 'offer') {
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('signal', { to: from, data: answer });
+  } else if (data.type === 'answer') {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+  } else if (data.candidate) {
+    await peerConnection.addIceCandidate(new RTCIceCandidate(data));
+  }
 });
 
-function sendTypingIndicator() {
-  const typingMsg = tim.createCustomMessage({
-    to: partnerUid,
-    conversationType: TIM.TYPES.CONV_C2C,
-    payload: { data: 'typing' }
-  });
-  tim.sendMessage(typingMsg).catch(console.error);
-}
+socket.on('chat', ({ message }) => appendChatMessage('Stranger', message));
+socket.on('typing', showTyping);
+socket.on('end_call', endCall);
 
-function appendChat(sender, msg) {
-  const div = document.createElement('div');
-  div.textContent = `${sender}: ${msg}`;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// === Call Controls ===
-function skipMatch(e) {
-  if (e) e.preventDefault();
-  cancelCountdown();
-  endConnection();
-  socket.emit('end_call');
-  partnerUid = null;
-  status.textContent = "Searching for a new match...";
-  if (queueUnsub) {
-    clearInterval(queueUnsub);
-    queueUnsub = null;
-  }
-  startMatchmaking();
-}
-
-function endCall(e) {
-  if (e) e.preventDefault();
-  cancelCountdown();
-  endConnection();
-  socket.emit('end_call');
-  if (queueUnsub) {
-    clearInterval(queueUnsub);
-    queueUnsub = null;
-  }
-  location.reload();
-}
-
-async function blockUser(e) {
-  if (e) e.preventDefault();
-  if (!currentUser || !partnerUid) return alert("No one to block!");
-  await fetch('/api/blockUser', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uid: currentUser.uid, blockUid: partnerUid }),
-  });
-  alert("User blocked!");
-  skipMatch();
-}
-
-socket.on('end_call', () => {
-  cancelCountdown();
-  endConnection();
-  if (queueUnsub) {
-    clearInterval(queueUnsub);
-    queueUnsub = null;
-  }
-  location.reload();
+socket.on('disconnect', () => {
+  endCall();
+  findingMatch = false;
+  initialButtons.classList.remove('hidden');
+  callButtons.classList.add('hidden');
+  chatContainer.classList.add('hidden');
+  searchingOverlay.style.display = 'none';
 });
 
-async function endConnection() {
+socket.on('connect', () => console.log('Connected to server.'));
+
+// === PEER CONNECTION ===
+function createPeerConnection() {
+  peerConnection = new RTCPeerConnection(iceConfig);
+
+  peerConnection.onicecandidate = ({ candidate }) => {
+    if (candidate) {
+      socket.emit('signal', { to: partnerSocketId, data: candidate });
+    }
+  };
+
+  peerConnection.ontrack = ({ streams }) => {
+    remoteVideo.srcObject = streams[0];
+  };
+
+  peerConnection.onconnectionstatechange = () => {
+    if (['disconnected', 'failed'].includes(peerConnection.connectionState)) {
+      endCall();
+    }
+  };
+}
+
+// === END CALL ===
+function endCall() {
   if (peerConnection) {
     peerConnection.close();
     peerConnection = null;
   }
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
+    localVideo.srcObject = null;
     localStream = null;
   }
-  localVideo.srcObject = null;
   remoteVideo.srcObject = null;
-  hideChat();
+  if (partnerSocketId) socket.emit('end_call', { to: partnerSocketId });
+  partnerSocketId = null;
 }
+
+// === MATCH ===
+async function findMatch() {
+  if (findingMatch) return;
+  findingMatch = true;
+  searchingOverlay.style.display = 'flex';
+  await startLocalStream();
+  socket.emit('find_match', {
+    gender: genderSelect.value,
+    location: locationSelect.value,
+    blocked: blockedIds
+  });
+}
+
+// === INIT ===
+preferencesPanel.classList.remove('visible');
+chatContainer.classList.add('hidden');
+callButtons.classList.add('hidden');
+searchingOverlay.style.display = 'none';
