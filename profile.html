@@ -171,7 +171,7 @@
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            document.getElementById("display-name").innerText = userData.displayName || "No Name";
+            document.getElementById("nickname").innerText = userData.displayName || "No Name";
             document.getElementById("gender").innerText = userData.gender || "Not specified";
             document.getElementById("age").innerText = userData.age || "Unknown";
             document.getElementById("country").innerText = userData.country || "Not set";
