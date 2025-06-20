@@ -1,259 +1,210 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sign Up - Snaptalk</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwapX - Marketplace for Everything</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Brighter, more trustworthy design */
+        body {
+            background-color: #f8fafc; /* Lighter background */
+            color: #333333; /* Darker text for better readability */
+        }
 
-  <!-- ✅ Google AdSense script -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5847677612423434"
-    crossorigin="anonymous"></script>
+        /* Logo styles */
+        .logo {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2b6cb0, #38b2ac); /* Softer gradient */
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 4px 10px rgba(38, 182, 172, 0.5), 0 0 20px rgba(43, 108, 176, 0.3);
+        }
 
-  <style>
-    /* General Styling */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #1e1e2f, #004aad);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      height: 100vh;
-    }
+        .hero-section {
+            background: linear-gradient(135deg, #f6ad55, #ed8936, #fbd38d); /* Lighter and warmer colors */
+            background-size: cover;
+            height: 60vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
 
-    .container {
-      width: 90%;
-      max-width: 1200px;
-      text-align: center;
-    }
+        .cta-button {
+            background-color: #38b2ac; /* Soft teal */
+            color: white;
+            padding: 16px 36px;
+            text-transform: uppercase;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(56, 178, 172, 0.5);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .cta-button:hover {
+            background-color: #2b6cb0; /* Soft blue */
+            box-shadow: 0 6px 30px rgba(43, 108, 176, 0.6);
+            transform: scale(1.05);
+        }
+        .cta-button:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(38, 182, 172, 0.8);
+        }
 
-    h1 {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #1db9ff;
-      margin-bottom: 20px;
-    }
+        /* Glowing effect for text */
+        .glowing-text {
+            color: #ffffff;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.9), 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.7);
+        }
 
-    p {
-      font-size: 1.2rem;
-      color: #e0e0e0;
-      margin-bottom: 40px;
-    }
+        /* Step Card Styling */
+        .step-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    .button-group {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-    }
+        .step-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
 
-    button {
-      padding: 15px 30px;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+        /* Category Card Styling */
+        .category-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    .start-call-btn {
-      background-color: #1db9ff;
-      color: #fff;
-    }
+        .category-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
 
-    .start-call-btn:hover {
-      background-color: #0094cc;
-    }
-
-    .filters-btn {
-      background-color: #252525;
-      color: #1db9ff;
-      border: 2px solid #1db9ff;
-    }
-
-    .filters-btn:hover {
-      background-color: #1e1e2f;
-      color: #0094cc;
-      border-color: #0094cc;
-    }
-
-    /* Auth Form Styles */
-    .auth-container {
-      background-color: rgba(0, 0, 0, 0.8);
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-      max-width: 400px;
-      margin: 20px auto;
-      text-align: center;
-    }
-
-    input, select {
-      padding: 12px;
-      font-size: 1rem;
-      width: 100%;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      border: none;
-      margin-top: 10px;
-    }
-
-    .auth-btn {
-      padding: 15px 30px;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
-      background-color: #1db9ff;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .auth-btn:hover {
-      background-color: #0094cc;
-    }
-
-    .auth-toggle {
-      font-size: 0.9rem;
-      color: #e0e0e0;
-      cursor: pointer;
-    }
-
-    footer {
-      margin-top: 60px;
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    footer a {
-      color: #1db9ff;
-      text-decoration: none;
-      margin: 0 5px;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+        /* Adjusting layout for responsiveness */
+        @media (max-width: 768px) {
+            .hero-section {
+                height: 50vh;
+            }
+            .cta-button {
+                width: 100%;
+                max-width: 300px;
+            }
+            .container {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- ✅ AdSense Ad Slot ABOVE form -->
-  <ins class="adsbygoogle"
-       style="display:block; margin-bottom: 20px;"
-       data-ad-client="ca-pub-5847677612423434"
-       data-ad-slot="7864868911"
-       data-ad-format="auto"></ins>
-  <script>
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  </script>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div>
+            <!-- SwapX Logo -->
+            <a href="#" class="logo glowing-text">SwapX</a>
+            <p class="mt-4 text-xl text-white">Your marketplace for everything – physical goods, NFTs, crypto, and rentals</p>
+            <a href="browse.html" class="cta-button">Browse Now</a> <!-- Replace "your-second-page.html" with the actual page -->
+        </div>
+    </section>
 
-  <div class="auth-container">
-    <form id="signupForm">
-      <h2>Sign Up</h2>
+    <!-- How It Works -->
+    <section class="container mx-auto py-16 text-center px-6">
+        <h2 class="text-3xl font-semibold text-yellow-400">How SwapX Works</h2>
+        <p class="text-xl mt-4">It’s simple! Join, browse, sell, and pay securely.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-12 mt-8">
+            <div class="step-card">
+                <h3 class="text-2xl font-semibold text-yellow-400">1. Sign Up</h3>
+                <p class="mt-2 text-gray-700">Create an account to start browsing and selling.</p>
+            </div>
+            <div class="step-card">
+                <h3 class="text-2xl font-semibold text-yellow-400">2. Browse or Sell</h3>
+                <p class="mt-2 text-gray-700">Find what you need or list your own items.</p>
+            </div>
+            <div class="step-card">
+                <h3 class="text-2xl font-semibold text-yellow-400">3. Secure Payments</h3>
+                <p class="mt-2 text-gray-700">Pay or receive payments through cryptocurrency or fiat.</p>
+            </div>
+        </div>
+    </section>
 
-      <input type="text" id="nickname" placeholder="Nickname" required />
+    <!-- Featured Categories -->
+    <section id="categories" class="container mx-auto py-16 text-center px-6">
+        <h2 class="text-3xl font-semibold text-yellow-400">Explore Our Categories</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-12 mt-8">
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Electronics</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Clothing</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">NFTs</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Rentals</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Furniture</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Books</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Music</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Art</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Sports Equipment</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Toys</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Automotive</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Beauty & Health</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Jewelry</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Collectibles</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Home Decor</h3>
+            </div>
+            <div class="category-card">
+                <h3 class="text-xl font-semibold text-yellow-400">Tech Gadgets</h3>
+            </div>
+        </div>
+    </section>
 
-      <select id="gender" required>
-        <option value="" disabled selected>Select Gender</option>
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-      </select>
-
-      <input type="number" id="age" placeholder="Age" min="13" required />
-
-      <input type="text" id="lifestyle" placeholder="Lifestyle (e.g. student, traveler)" required />
-
-      <input type="email" id="email" placeholder="Email" required />
-
-      <input type="password" id="password" placeholder="Password" required />
-
-      <button type="submit" class="auth-btn">Sign Up</button>
-    </form>
-  </div>
-
-  <!-- ✅ Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-  <script type="module">
-    // === ✅ Initialize Firebase ===
-    const firebaseConfig = {
-      apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-      authDomain: "snaptalk-17f6d.firebaseapp.com",
-      projectId: "snaptalk-17f6d",
-      storageBucket: "snaptalk-17f6d.appspot.com",
-      messagingSenderId: "592763376854",
-      appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    const form = document.getElementById('signupForm');
-
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-
-      const nickname = document.getElementById('nickname').value.trim();
-      const gender = document.getElementById('gender').value;
-      const age = parseInt(document.getElementById('age').value);
-      const lifestyle = document.getElementById('lifestyle').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (isNaN(age) || age < 13) {
-        alert('You must be at least 13 years old.');
-        return;
-      }
-
-      let location = 'any';
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        location = data.country_code.toLowerCase();
-      } catch (err) {
-        console.warn('Could not fetch location, defaulting to any.');
-      }
-
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
-        const uid = cred.user.uid;
-
-        await db.collection('users').doc(uid).set({
-          nickname,
-          gender,
-          age,
-          lifestyle,
-          location,
-          email
-        });
-
-        localStorage.setItem('nickname', nickname);
-        localStorage.setItem('gender', gender);
-        localStorage.setItem('age', age);
-        localStorage.setItem('lifestyle', lifestyle);
-        localStorage.setItem('location', location);
-
-        if (age >= 13 && age <= 17) {
-          window.location.href = 'aachat.html';
-        } else if (age >= 18) {
-          window.location.href = 'cchat.html';
-        } else {
-          alert('Invalid age.');
-        }
-
-      } catch (err) {
-        console.error('❌ Error creating account:', err);
-        alert(err.message);
-      }
-    };
-  </script>
+    <!-- Footer -->
+    <footer class="bg-black text-white py-6">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 SwapX. All rights reserved.</p>
+            <div class="mt-4 footer-links">
+                <a href="#" class="mx-4 hover:text-yellow-400">Terms of Service</a>
+                <a href="#" class="mx-4 hover:text-yellow-400">Privacy Policy</a>
+                <a href="#" class="mx-4 hover:text-yellow-400">Contact Us</a>
+            </div>
+        </div>
+    </footer>
 
 </body>
 </html>

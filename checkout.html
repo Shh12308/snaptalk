@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - SwapX</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #333333;
+        }
+        .cart-item { background-color: #ffffff; border-radius: 10px; padding: 16px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); margin-bottom: 16px; }
+        .cart-summary { background-color: #ffffff; padding: 24px; border-radius: 10px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+
+    <!-- Cart Content -->
+    <section class="container mx-auto py-16 px-6">
+        <div id="cart-items-container" class="cart-items">
+            <!-- Cart items will be dynamically inserted here -->
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary mt-8">
+            <h3 class="text-2xl font-semibold text-yellow-400">Cart Summary</h3>
+            <div class="flex justify-between py-4">
+                <span class="text-lg font-semibold text-gray-800">Subtotal</span>
+                <span id="subtotal" class="text-lg font-semibold text-gray-800">$0</span>
+            </div>
+            <div class="flex justify-between py-4">
+                <span class="text-lg font-semibold text-gray-800">Shipping</span>
+                <span id="shipping" class="text-lg font-semibold text-gray-800">$0</span>
+            </div>
+            <div class="flex justify-between py-4 border-t border-b">
+                <span class="text-lg font-semibold text-gray-800">Total</span>
+                <span id="total" class="text-lg font-semibold text-gray-800">$0</span>
+            </div>
+            <div class="mt-6 text-center">
+                <a href="checkout.html" class="cta-button bg-yellow-400 text-white py-2 px-6 rounded-lg hover:bg-yellow-500">Proceed to Checkout</a>
+            </div>
+        </div>
+
+        <!-- Empty Cart Button -->
+        <div class="mt-6 text-center">
+            <button id="empty-cart" class="text-red-500 font-semibold hover:text-red-600">Empty Cart</button>
+        </div>
+    </section>
+
+    <script>
+        // Retrieve cart from localStorage
+        let cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+
+        // Update cart UI
+        function updateCartUI() {
+            const cartContainer = document.getElementById('cart-items-container');
+            cartContainer.innerHTML = '';  // Clear current items
+            let subtotal = 0;
+            let shippingCost = 5;  // Example shipping cost (you could adjust this dynamically)
+
+            cartItems.forEach(item => {
+                subtotal += item.price * item.quantity;
+                const cartItemElement = document.createElement('div');
+                cartItemElement.classList.add('cart-item', 'flex', 'items-center', 'justify-between');
+                cartItemElement.innerHTML = `
+                    <div class="flex items-center">
+                        <img src="${item.imageUrl}" alt="Product Image" class="w-24 h-24 object-cover rounded-md">
+                        <div class="ml-4">
+                            <p class="font-semibold text-lg">${item.productName}</p>
+                            <p class="text-gray-600">Price: ${item.price} ETH</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button onclick="changeQuantity('${item.productId}', -1)" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-full">-</button>
+                        <span class="mx-4 text-xl">${item.quantity}</span>
+                        <button onclick="changeQuantity('${item.productId}', 1)" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-full">+</button>
+                        <button onclick="removeItem('${item.productId}')" class="ml-4 text-red-500">Remove</button>
+                    </div>
+                    <div class="text-lg font-semibold text-gray-800">${item.price * item.quantity} ETH</div>
+                `;
+                cartContainer.appendChild(cartItemElement);
+            });
+
+            // Update the summary
+            const total = subtotal + shippingCost;
+            document.getElementById('subtotal').textContent = `${subtotal} ETH`;
+            document.getElementById('shipping').textContent = `${shippingCost} ETH`;
+            document.getElementById('total').textContent = `${total} ETH`;
+        }
+
+        // Change item quantity
+        function changeQuantity(productId, change) {
+            const item = cartItems.find(item => item.productId === productId);
+            if (item) {
+                item.quantity = Math.max(1, item.quantity + change);
+                localStorage.setItem('cart', JSON.stringify(cartItems));
+                updateCartUI();
+            }
+        }
+
+        // Remove item from cart
+        function removeItem(productId) {
+            cartItems = cartItems.filter(item => item.productId !== productId);
+            localStorage.setItem('cart', JSON.stringify(cartItems));
+            updateCartUI();
+        }
+
+        // Empty the cart
+        document.getElementById('empty-cart').addEventListener('click', () => {
+            cartItems = [];
+            localStorage.setItem('cart', JSON.stringify(cartItems));
+            updateCartUI();
+        });
+
+        // Initialize cart UI
+        updateCartUI();
+    </script>
+</body>
+</html>

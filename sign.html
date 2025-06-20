@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up - SwapX</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.5/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.5/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.5/firebase-firestore.js"></script>
+
+  <!-- Ethers.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- Google Maps Places API (Autocomplete) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places" async defer></script>
+</head>
+
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-2xl font-semibold text-center mb-6">Create an Account</h2>
+    
+    <!-- Signup Form -->
+    <form id="signup-form">
+      <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+      <input type="text" id="username" class="mt-2 w-full p-2 border rounded-lg" required>
+
+      <label for="email" class="block text-sm font-medium text-gray-700 mt-4">Email</label>
+      <input type="email" id="email" class="mt-2 w-full p-2 border rounded-lg" required>
+
+      <label for="password" class="block text-sm font-medium text-gray-700 mt-4">Password</label>
+      <input type="password" id="password" class="mt-2 w-full p-2 border rounded-lg" required>
+
+      <label for="home-address" class="block text-sm font-medium text-gray-700 mt-4">Home Address (with Postcode/ZIP)</label>
+      <input type="text" id="home-address" class="mt-2 w-full p-2 border rounded-lg" placeholder="Start typing your address..." required>
+
+      <label for="crypto-wallet" class="block text-sm font-medium text-gray-700 mt-4">Crypto Wallet Address</label>
+      <div class="flex items-center">
+        <input type="text" id="crypto-wallet" class="mt-2 w-full p-2 border rounded-lg" placeholder="Enter or connect your wallet" required>
+        <button type="button" id="connect-wallet" class="mt-2 ml-2 bg-green-600 text-white px-3 py-2 rounded-lg">Connect Wallet</button>
+      </div>
+
+      <button type="submit" class="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg">Sign Up</button>
+    </form>
+
+    <p class="mt-4 text-sm text-center">Already have an account? <a href="login.html" class="text-blue-600 hover:text-blue-800">Log In</a></p>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "swapx-4b762.firebaseapp.com",
+      projectId: "swapx-4b762",
+      storageBucket: "swapx-4b762.appspot.com",
+      messagingSenderId: "125084061204",
+      appId: "1:125084061204:web:d9d106e42872733937a101",
+      measurementId: "G-51H0H3LEYS"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let walletAddress = null;
+
+    // Wallet Connection
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    document.getElementById('connect-wallet').addEventListener('click', async () => {
+      try {
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        walletAddress = await signer.getAddress();
+        document.getElementById('crypto-wallet').value = walletAddress;
+        alert("Wallet connected successfully!");
+      } catch (err) {
+        alert("Wallet connection failed.");
+      }
+    });
+
+    // Google Places Autocomplete
+    let autocomplete;
+    function initAutocomplete() {
+      const addressInput = document.getElementById("home-address");
+      autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        types: ["geocode"],
+        componentRestrictions: { country: "gb" } // Limit to UK or change as needed
+      });
+
+      // Bias to user location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const geolocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          const circle = new google.maps.Circle({
+            center: geolocation,
+            radius: position.coords.accuracy,
+          });
+          autocomplete.setBounds(circle.getBounds());
+        });
+      }
+    }
+
+    // Wait until Google Maps script loads
+    window.initAutocomplete = initAutocomplete;
+    window.addEventListener("load", () => {
+      if (typeof google !== 'undefined' && google.maps) {
+        initAutocomplete();
+      } else {
+        const interval = setInterval(() => {
+          if (typeof google !== 'undefined' && google.maps) {
+            clearInterval(interval);
+            initAutocomplete();
+          }
+        }, 300);
+      }
+    });
+
+    // Sign Up
+    document.getElementById('signup-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const homeAddress = document.getElementById('home-address').value;
+
+      if (!username || !email || !password || !homeAddress || !walletAddress) {
+        alert("All fields are required!");
+        return;
+      }
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          const user = userCredential.user;
+          return db.collection("users").doc(user.uid).set({
+            username,
+            email,
+            homeAddress,
+            cryptoWallet: walletAddress
+          });
+        })
+        .then(() => {
+          alert("Account created successfully!");
+          window.location.href = "browse.html";
+        })
+        .catch(err => {
+          alert(err.message);
+        });
+    });
+  </script>
+</body>
+</html>

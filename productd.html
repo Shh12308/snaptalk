@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #333333;
+            font-family: Arial, sans-serif;
+        }
+
+        .product-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .product-image {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-info {
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        .product-name {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333333;
+        }
+
+        .product-price {
+            color: #38b2ac;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .product-description {
+            margin-top: 20px;
+            color: #555555;
+        }
+
+        .cta-button {
+            background-color: #38b2ac;
+            color: white;
+            padding: 12px 36px;
+            text-transform: uppercase;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            background-color: #2b6cb0;
+        }
+
+        .cta-button:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(38, 182, 172, 0.8);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Product Detail Section -->
+<section id="product-detail" class="product-container">
+    <!-- Product Image -->
+    <div>
+        <img id="product-image" class="product-image" src="" alt="Product Image" onerror="this.onerror=null;this.src='placeholder.jpg'">
+    </div>
+    
+    <!-- Product Information -->
+    <div class="product-info">
+        <h2 id="product-name" class="product-name">Loading...</h2>
+        <p id="product-category" class="text-gray-600">Category: Loading...</p>
+        <p id="product-price" class="product-price">Price: Loading...</p>
+        <p id="product-description" class="product-description">Description: Loading...</p>
+        
+        <a href="#" id="buy-button" class="cta-button">Buy Now</a>
+    </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "YOUR-API-KEY", 
+        authDomain: "YOUR-PROJECT-ID.firebaseapp.com", 
+        projectId: "YOUR-PROJECT-ID", 
+        storageBucket: "YOUR-PROJECT-ID.appspot.com", 
+        messagingSenderId: "YOUR-MESSAGE-SENDER-ID", 
+        appId: "YOUR-APP-ID" 
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Function to fetch product details
+    async function fetchProductDetails() {
+        // Get product ID from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        if (!productId) {
+            alert('Product not found');
+            return;
+        }
+
+        try {
+            // Fetch product data from Firestore
+            const productDoc = await db.collection("products").doc(productId).get();
+
+            if (productDoc.exists) {
+                const product = productDoc.data();
+
+                // Convert price to ETH if stored in Wei
+                let priceETH;
+                if (product.priceInWei) {
+                    priceETH = (product.priceInWei / 1e18).toFixed(5); // Convert Wei to ETH
+                } else if (product.price) {
+                    priceETH = parseFloat(product.price).toFixed(5); // Already in ETH
+                } else {
+                    priceETH = "N/A";
+                }
+
+                // Display the product data
+                document.getElementById('product-name').textContent = product.name || "No Name Available";
+                document.getElementById('product-category').textContent = `Category: ${product.category || "Unknown"}`;
+                document.getElementById('product-price').textContent = `Price: ${priceETH} Ξ`;
+                document.getElementById('product-description').textContent = product.description || "No description available.";
+                document.getElementById('product-image').src = product.imageURL || "placeholder.jpg";
+                
+                // Update the Buy Now button link
+                document.getElementById('buy-button').href = `checkout.html?id=${productId}`;
+            } else {
+                alert('Product not found');
+            }
+        } catch (error) {
+            console.error("Error fetching product details: ", error);
+            alert('Failed to fetch product details');
+        }
+    }
+
+    // Call the function to fetch product details when the page loads
+    window.onload = fetchProductDetails;
+</script>
+
+</body>
+</html>

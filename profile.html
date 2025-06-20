@@ -2,291 +2,145 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Profile - Snaptalk</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile - SwapX</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet"/>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    body {
+      background: #0d0d0d;
+      color: white;
       font-family: Arial, sans-serif;
     }
-
-    body {
-      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+    .profile-container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
     }
-
-    .container {
-      background: white;
-      max-width: 400px;
-      width: 100%;
-      padding: 20px;
+    .profile-card {
+      background-color: #1a1a1a;
+      padding: 2rem;
       border-radius: 10px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-      text-align: center;
+      box-shadow: 0 0 10px #00ff99;
     }
-
-    h1 {
-      color: #333;
-      margin-bottom: 15px;
-    }
-
-    .profile-info {
-      font-size: 16px;
-      color: #444;
-      margin-bottom: 10px;
+    .tab-button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      border-radius: 5px;
+      background: #00ff99;
+      color: black;
       font-weight: bold;
-      text-align: left;
-      background: #f3f3f3;
-      padding: 10px;
-      border-radius: 5px;
+      cursor: pointer;
     }
-
-    .bio-container {
-      text-align: left;
-      background: #f3f3f3;
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 10px;
+    .tab-button.active {
+      background: #00cc77;
     }
-
-    textarea {
-      width: 100%;
-      height: 150px;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-
-    .char-count {
-      font-size: 12px;
-      color: #888;
-      margin-top: 5px;
-    }
-
-    .profile-pic-container {
-      margin-bottom: 20px;
-    }
-
-    .profile-pic {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      border: 3px solid #ff9a9e;
-      object-fit: cover;
-      margin-bottom: 10px;
-    }
-
-    input[type="file"] {
+    .tab-content {
       display: none;
+      margin-top: 2rem;
     }
-
-    .upload-label {
-      display: inline-block;
-      background: #ff9a9e;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-top: 8px;
-      width: 100%;
-      text-align: center;
-    }
-
-    .upload-label:hover {
-      background: #ff6b81;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    #save-profile {
-      background: #007bff;
-      color: white;
-    }
-
-    #save-profile:hover {
-      background: #0056b3;
-    }
-
-    #logout {
-      background: #ff4d4d;
-      color: white;
-    }
-
-    #logout:hover {
-      background: #cc0000;
+    .tab-content.active {
+      display: block;
     }
   </style>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
-  import { getStorage, ref, getDownloadURL, uploadBytes } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-storage.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-    authDomain: "snaptalk-17f6d.firebaseapp.com",
-    projectId: "snaptalk-17f6d",
-    storageBucket: "snaptalk-17f6d.appspot.com",
-    messagingSenderId: "592763376854",
-    appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-    measurementId: "G-BJ36XXEJQ3"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth();
-  const db = getFirestore();
-  const storage = getStorage();
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const profilePic = document.getElementById("profile-pic");
-    const fileInput = document.getElementById("profile-pic-upload");
-    const bioTextarea = document.getElementById("bio");
-    const saveProfileBtn = document.getElementById("save-profile");
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userId = user.uid;
-        const userDocRef = doc(db, "users", userId);
-
-        try {
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            document.getElementById("nickname").innerText = userData.displayName || "No Name";
-            document.getElementById("gender").innerText = userData.gender || "Not specified";
-            document.getElementById("age").innerText = userData.age || "Unknown";
-            document.getElementById("country").innerText = userData.country || "Not set";
-            bioTextarea.value = userData.bio || "";
-
-            // Load profile picture
-            if (userData.profilePic) {
-              profilePic.src = userData.profilePic;
-            } else {
-              profilePic.src = "1C2E7234-5C18-45EC-A7A3-10414B8FB6F4.jpeg";
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-      } else {
-        window.location.href = "index.html";
-      }
-    });
-
-    // Save bio to Firestore
-    saveProfileBtn.addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const userId = user.uid;
-      const newBio = bioTextarea.value.trim();
-
-      if (newBio === "") {
-        alert("Bio cannot be empty!");
-        return;
-      }
-
-      try {
-        const userDocRef = doc(db, "users", userId);
-        await updateDoc(userDocRef, { bio: newBio });
-
-        alert("Profile updated successfully!");
-      } catch (error) {
-        console.error("Error updating profile:", error);
-        alert("Failed to update profile.");
-      }
-    });
-
-    // Handle profile picture upload
-    fileInput.addEventListener("change", async (event) => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const userId = user.uid;
-      const fileExtension = file.name.split('.').pop().toLowerCase();
-      const validExtensions = ['jpg', 'jpeg', 'png'];
-
-      if (!validExtensions.includes(fileExtension)) {
-        alert("Please upload a valid image file (.jpg, .jpeg, or .png)");
-        return;
-      }
-
-      // Generate reference path dynamically based on the file extension
-      const profilePicRef = ref(storage, `profile_pics/${userId}.${fileExtension}`);
-
-      try {
-        // Show preview before upload
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          profilePic.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-
-        await uploadBytes(profilePicRef, file);
-        const newProfilePicURL = await getDownloadURL(profilePicRef);
-
-        const userDocRef = doc(db, "users", userId);
-        await updateDoc(userDocRef, { profilePic: newProfilePicURL });
-
-        alert("Profile picture updated!");
-      } catch (error) {
-        console.error("Error uploading profile picture:", error);
-      }
-    });
-
-    document.getElementById("logout").addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "index.html";
-    });
-  });
-</script>
 </head>
 <body>
-  <div class="container">
-    <h1>My Profile</h1>
-
-    <!-- Profile Picture Section -->
-    <div class="profile-pic-container">
-      <img id="profile-pic" class="profile-pic" src="robot-avatar.png" alt="Profile Picture" />
-      <label for="profile-pic-upload" class="upload-label">Upload Profile Picture</label>
-      <input type="file" id="profile-pic-upload" accept="image/*" />
+  <div class="profile-container">
+    <div class="profile-card">
+      <h2 class="text-2xl font-bold mb-4">Your Profile</h2>
+      <p><strong>Name:</strong> <span id="user-name">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+      <p><strong>UID:</strong> <span id="user-uid">Loading...</span></p>
     </div>
 
-    <div class="profile-info">Name: <span id="display-name">Loading...</span></div>
-    <div class="profile-info">Gender: <span id="gender">Loading...</span></div>
-    <div class="profile-info">Age: <span id="age">Loading...</span></div>
-    <div class="profile-info">Country: <span id="country">Loading...</span></div>
-
-    <div class="bio-container">
-      <strong>Bio:</strong>
-      <textarea id="bio" maxlength="700" placeholder="Tell us about yourself..."></textarea>
-      <div class="char-count" id="char-count">700 characters remaining</div>
+    <div class="mt-6">
+      <button class="tab-button active" onclick="switchTab('listings')">Listings</button>
+      <button class="tab-button" onclick="switchTab('payments')">Payments</button>
     </div>
 
-    <button id="save-profile">Save Profile</button>
-    <button id="logout">Log Out</button>
+    <div id="listings" class="tab-content active">
+      <h3 class="text-xl font-semibold mt-4 mb-2">Your Listings</h3>
+      <div id="user-listings" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <div id="payments" class="tab-content">
+      <h3 class="text-xl font-semibold mt-4 mb-2">Purchases</h3>
+      <div id="user-payments" class="grid grid-cols-1 gap-4"></div>
+    </div>
   </div>
+
+  <script type="module">
+    import { db } from './fire.js';
+    import {
+      getAuth,
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import {
+      collection,
+      getDocs,
+      query,
+      where
+    } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+    const auth = getAuth();
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        document.getElementById("user-name").innerText = user.displayName || "No Name Set";
+        document.getElementById("user-email").innerText = user.email;
+        document.getElementById("user-uid").innerText = user.uid;
+
+        // Load Listings
+        const listingsRef = collection(db, "listings", user.uid, "userListings");
+        const listingsSnap = await getDocs(listingsRef);
+        const listingsContainer = document.getElementById("user-listings");
+
+        if (listingsSnap.empty) {
+          listingsContainer.innerHTML = "<p>No listings found.</p>";
+        } else {
+          listingsSnap.forEach(doc => {
+            const data = doc.data();
+            listingsContainer.innerHTML += `
+              <div class="bg-gray-800 p-4 rounded shadow">
+                <h4 class="text-lg font-semibold">${data.title || 'Untitled Listing'}</h4>
+                <p><strong>Price:</strong> ${data.price} ${data.cryptoType}</p>
+                <p><strong>Type:</strong> ${data.pricingType}</p>
+                <p><strong>Delivery:</strong> ${data.deliveryMethod}</p>
+              </div>
+            `;
+          });
+        }
+
+        // Load Payments
+        const paymentsQuery = query(collection(db, "orders"), where("sellerId", "==", user.uid));
+        const paymentsSnap = await getDocs(paymentsQuery);
+        const paymentsContainer = document.getElementById("user-payments");
+
+        if (paymentsSnap.empty) {
+          paymentsContainer.innerHTML = "<p>No payments found.</p>";
+        } else {
+          paymentsSnap.forEach(doc => {
+            const data = doc.data();
+            paymentsContainer.innerHTML += `
+              <div class="bg-gray-800 p-4 rounded shadow">
+                <h4 class="text-lg font-semibold">Order ID: ${doc.id}</h4>
+                <p><strong>Listing:</strong> ${data.itemName}</p>
+                <p><strong>Status:</strong> ${data.status}</p>
+                <button onclick="window.location.href='shipping.html?orderId=${doc.id}'" class="mt-2 px-4 py-2 bg-green-500 text-black rounded">View Shipping Info</button>
+              </div>
+            `;
+          });
+        }
+      }
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`.tab-button[onclick*="${tabId}"]`).classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+  </script>
 </body>
 </html>

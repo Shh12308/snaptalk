@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SwapX Seller Dashboard</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #ff00ff;
+    }
+
+    .dashboard-section {
+      background: #1e1e1e;
+      border: 1px solid #ff00ff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #444;
+      text-align: left;
+    }
+
+    th {
+      color: #ff00ff;
+    }
+
+    .withdraw-btn {
+      display: inline-block;
+      background: #ff00ff;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .withdraw-btn:hover {
+      background: #ff66cc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to Your Seller Dashboard</h1>
+
+  <!-- Product Section -->
+  <div class="dashboard-section">
+    <h2>Your Products</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Views</th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody id="product-table">
+        <!-- JS will populate this -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Orders Section -->
+  <div class="dashboard-section">
+    <h2>Orders</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Buyer Name</th>
+          <th>Address</th>
+          <th>Product</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody id="orders-table">
+        <!-- JS will populate this -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Withdraw Link -->
+  <a href="withdraw.html" class="withdraw-btn">Withdraw Funds</a>
+
+  <script>
+    // Fake product data
+    const products = [
+      { name: "Wireless Headphones", price: "0.02 BTC", views: 123, link: "#" },
+      { name: "Gaming Keyboard", price: "0.015 BTC", views: 87, link: "#" },
+      { name: "Crypto Art Print", price: "0.01 ETH", views: 46, link: "#" },
+    ];
+
+    // Fake orders
+    const orders = [
+      { name: "Alice Smith", address: "123 Market St, NY", product: "Wireless Headphones", quantity: 1 },
+      { name: "Bob Johnson", address: "456 Sunset Blvd, LA", product: "Gaming Keyboard", quantity: 2 },
+      { name: "Carol Davis", address: "789 Ocean Ave, SF", product: "Crypto Art Print", quantity: 1 },
+    ];
+
+    // Populate product table
+    const productTable = document.getElementById("product-table");
+    products.forEach(p => {
+      productTable.innerHTML += `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.price}</td>
+          <td>${p.views}</td>
+          <td><a href="${p.link}" style="color: #ff66cc;">View</a></td>
+        </tr>
+      `;
+    });
+
+    // Populate orders table
+    const ordersTable = document.getElementById("orders-table");
+    orders.forEach(o => {
+      ordersTable.innerHTML += `
+        <tr>
+          <td>${o.name}</td>
+          <td>${o.address}</td>
+          <td>${o.product}</td>
+          <td>${o.quantity}</td>
+        </tr>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom, black, #001f3f);
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+        }
+        .input-field {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        select, input {
+            color: black;
+        }
+        .next-btn {
+            background-color: #00ff99;
+            color: black;
+            padding: 12px;
+            width: 100%;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .next-btn:hover {
+            background-color: #00cc77;
+        }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-storage.js"></script>
+
+ <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js"></script>
+
+<!-- Your Firebase Config Script -->
+<script src="fire.js"></script>
+
+<!-- Your App Script (must come AFTER fire.js) -->
+<script src="app.js"></script>
+</head>
+<body>
+
+<div class="form-container">
+    <h2 class="text-center text-2xl font-bold">Step 1: Product Details</h2>
+
+    <label>Category:</label>
+    <select id="category" class="input-field" onchange="updateForm()">
+        <option value="electronics">Electronics</option>
+        <option value="jewelry">Jewelry</option>
+        <option value="clothing">Clothing</option>
+        <option value="home-goods">Home Goods</option>
+        <option value="rentals">Rentals</option>
+        <option value="nfts">NFTs</option>
+        <option value="crypto-tech">Crypto/Tech</option>
+    </select>
+
+    <div id="category-fields"></div>
+
+    <label>Upload Image:</label>
+    <input type="file" accept="image/*" id="productImage" class="input-field">
+
+    <button class="next-btn" onclick="goToPricing()">Next</button>
+</div>
+
+<script>
+    function updateForm() {
+        let category = document.getElementById("category").value;
+        let fields = document.getElementById("category-fields");
+
+        let formHTML = '';
+
+        if (category === "electronics") {
+            formHTML = `
+                <label>Type of Electronics:</label>
+                <select class="input-field">
+                    <option>Phone</option>
+                    <option>Laptop</option>
+                    <option>Tablet</option>
+                    <option>TV</option>
+                    <option>Other</option>
+                </select>
+                <label>Brand:</label>
+                <input type="text" class="input-field">
+                <label>Model:</label>
+                <input type="text" class="input-field">
+                <label>Condition:</label>
+                <select class="input-field">
+                    <option>New</option>
+                    <option>Used</option>
+                    <option>Refurbished</option>
+                </select>
+                <label>Additional Features:</label>
+                <textarea class="input-field"></textarea>
+            `;
+        } 
+        else if (category === "jewelry") {
+            formHTML = `
+                <label>Type of Jewelry:</label>
+                <select class="input-field">
+                    <option>Ring</option>
+                    <option>Necklace</option>
+                    <option>Bracelet</option>
+                    <option>Earrings</option>
+                    <option>Other</option>
+                </select>
+                <label>Material:</label>
+                <input type="text" class="input-field">
+                <label>Purity (e.g. 18k Gold, 925 Silver):</label>
+                <input type="text" class="input-field">
+                <label>Gemstones (if any):</label>
+                <input type="text" class="input-field">
+                <label>Condition:</label>
+                <select class="input-field">
+                    <option>New</option>
+                    <option>Used</option>
+                    <option>Vintage</option>
+                </select>
+            `;
+        } 
+        else if (category === "rentals") {
+            formHTML = `
+                <label>Type of Rental Item:</label>
+                <select class="input-field">
+                    <option>Apartment</option>
+                    <option>Car</option>
+                    <option>Equipment</option>
+                    <option>Furniture</option>
+                    <option>Other</option>
+                </select>
+                <label>Condition:</label>
+                <select class="input-field">
+                    <option>New</option>
+                    <option>Used</option>
+                </select>
+                <label>Rental Price per Day:</label>
+                <input type="number" class="input-field" placeholder="Price per day">
+                <label>Rental Duration:</label>
+                <select class="input-field">
+                    <option>1 Day</option>
+                    <option>1 Week</option>
+                    <option>1 Month</option>
+                    <option>Custom</option>
+                </select>
+                <label>Delivery Options:</label>
+                <select class="input-field">
+                    <option>Pick-up Only</option>
+                    <option>Delivery Available</option>
+                    <option>Both</option>
+                </select>
+                <label>Availability:</label>
+                <input type="text" class="input-field" placeholder="Available Dates (e.g. 1st March - 5th March)">
+            `;
+        }
+        else if (category === "nfts") {
+            formHTML = `
+                <label>Artwork Type:</label>
+                <select class="input-field">
+                    <option>Image</option>
+                    <option>GIF</option>
+                    <option>3D Model</option>
+                    <option>Other</option>
+                </select>
+                <label>Blockchain:</label>
+                <input type="text" class="input-field">
+                <label>Contract Address:</label>
+                <input type="text" class="input-field">
+                <label>Creator Name:</label>
+                <input type="text" class="input-field">
+                <label>Rarity:</label>
+                <input type="text" class="input-field">
+            `;
+        } 
+        else if (category === "crypto-tech") {
+            formHTML = `
+                <label>Type of Tech:</label>
+                <select class="input-field">
+                    <option>Mining Rig</option>
+                    <option>Hardware Wallet</option>
+                    <option>Other</option>
+                </select>
+                <label>Brand & Model:</label>
+                <input type="text" class="input-field">
+                <label>Hash Rate (if applicable):</label>
+                <input type="text" class="input-field">
+                <label>Condition:</label>
+                <select class="input-field">
+                    <option>New</option>
+                    <option>Used</option>
+                </select>
+            `;
+        }
+        else {
+            formHTML = `<p>Please select a category.</p>`;
+        }
+
+        fields.innerHTML = formHTML;
+    }
+
+    function goToPricing() {
+        const category = document.getElementById("category").value;
+        const productImage = document.getElementById("productImage").files[0];
+        const categoryFields = document.getElementById("category-fields");
+
+        let productDetails = {
+            category: category,
+            image: productImage ? productImage.name : null,
+            additionalDetails: {}
+        };
+
+        // Extract details from the category-specific fields
+        if (category === "electronics") {
+            const electronicsType = categoryFields.querySelector('select').value;
+            const brand = categoryFields.querySelectorAll('input')[0].value;
+            const model = categoryFields.querySelectorAll('input')[1].value;
+            const condition = categoryFields.querySelectorAll('select')[1].value;
+            const features = categoryFields.querySelector('textarea').value;
+            productDetails.additionalDetails = { electronicsType, brand, model, condition, features };
+        } else if (category === "jewelry") {
+            const jewelryType = categoryFields.querySelector('select').value;
+            const material = categoryFields.querySelectorAll('input')[0].value;
+            const purity = categoryFields.querySelectorAll('input')[1].value;
+            const gemstones = categoryFields.querySelectorAll('input')[2].value;
+            const condition = categoryFields.querySelectorAll('select')[1].value;
+            productDetails.additionalDetails = { jewelryType, material, purity, gemstones, condition };
+        } else if (category === "rentals") {
+            const rentalType = categoryFields.querySelector('select').value;
+            const rentalPrice = categoryFields.querySelectorAll('input')[0].value;
+            const rentalDuration = categoryFields.querySelector('select').value;
+            const deliveryOptions = categoryFields.querySelector('select').value;
+            const availability = categoryFields.querySelector('input').value;
+            const condition = categoryFields.querySelectorAll('select')[1].value;
+            productDetails.additionalDetails = { rentalType, rentalPrice, rentalDuration, deliveryOptions, availability, condition };
+        } else if (category === "nfts") {
+            const artworkType = categoryFields.querySelector('select').value;
+            const blockchain = categoryFields.querySelector('input').value;
+            const contractAddress = categoryFields.querySelectorAll('input')[1].value;
+            const creatorName = categoryFields.querySelectorAll('input')[2].value;
+            const rarity = categoryFields.querySelectorAll('input')[3].value;
+            productDetails.additionalDetails = { artworkType, blockchain, contractAddress, creatorName, rarity };
+        } else if (category === "crypto-tech") {
+            const techType = categoryFields.querySelector('select').value;
+            const brandModel = categoryFields.querySelector('input').value;
+            const hashRate = categoryFields.querySelectorAll('input')[1].value;
+            const condition = categoryFields.querySelectorAll('select')[1].value;
+            productDetails.additionalDetails = { techType, brandModel, hashRate, condition };
+        }
+
+        // Upload image if available
+        if (productImage) {
+            const storageRef = storage.ref('productImages/' + productImage.name);
+            storageRef.put(productImage).then(snapshot => {
+                snapshot.ref.getDownloadURL().then(downloadURL => {
+                    productDetails.imageURL = downloadURL;
+                    // Save product to Firebase
+                    const productId = firebase.database().ref().child('products').push().key;
+                    firebase.database().ref('products/' + productId).set(productDetails).then(() => {
+                        alert("Product saved successfully! Moving to pricing page...");
+                        window.location.href = "pricing.html";
+                    }).catch(error => {
+                        alert("Error saving product: " + error.message);
+                    });
+                });
+            }).catch(error => {
+                alert("Error uploading image: " + error.message);
+            });
+        } else {
+            // Save product without image if no file is selected
+            const productId = firebase.database().ref().child('products').push().key;
+            firebase.database().ref('products/' + productId).set(productDetails).then(() => {
+                alert("Product saved successfully! Moving to pricing page...");
+                window.location.href = "product-pricing.html";
+            }).catch(error => {
+                alert("Error saving product: " + error.message);
+            });
+        }
+    }
+</script>
+
+</body>
+</html>

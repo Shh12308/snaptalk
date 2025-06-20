@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shipping Details - SwapX</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background: #0d0d0d;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 2rem;
+    }
+    .card {
+      background-color: #1a1a1a;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #00ff99;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2 class="text-2xl font-bold mb-4">Shipping Information</h2>
+      <div id="shipping-info">
+        <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './fire.js';
+    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("orderId");
+
+    async function loadShippingInfo(orderId) {
+      const container = document.getElementById("shipping-info");
+
+      if (!orderId) {
+        container.innerHTML = "<p>No order ID provided.</p>";
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "orders", orderId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          container.innerHTML = "<p>Order not found.</p>";
+          return;
+        }
+
+        const data = docSnap.data();
+
+        container.innerHTML = `
+          <p><strong>Order ID:</strong> ${orderId}</p>
+          <p><strong>Item:</strong> ${data.itemName}</p>
+          <p><strong>Price:</strong> ${data.price} ${data.currency}</p>
+          <hr class="my-4 border-gray-700">
+          <h3 class="text-xl font-semibold mb-2">Recipient Info</h3>
+          <p><strong>Name:</strong> ${data.recipientName}</p>
+          <p><strong>Address:</strong> ${data.address}</p>
+          <p><strong>Post Code:</strong> ${data.postCode}</p>
+          <p><strong>City:</strong> ${data.city}</p>
+          <p><strong>Country:</strong> ${data.country}</p>
+          <p><strong>Phone:</strong> ${data.phone}</p>
+          <p><strong>Email:</strong> ${data.email}</p>
+          <hr class="my-4 border-gray-700">
+          <p><strong>Shipping Method:</strong> ${data.shippingMethod}</p>
+          <p><strong>Status:</strong> ${data.status}</p>
+        `;
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        container.innerHTML = "<p>Error loading order details.</p>";
+      }
+    }
+
+    loadShippingInfo(orderId);
+  </script>
+</body>
+</html>

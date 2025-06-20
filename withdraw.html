@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw Funds - SwapX</title>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import {
+      getFirestore, doc, getDoc, updateDoc, collection, addDoc, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+       apiKey: "AIzaSyBWOQpG6OijqOviZnPl9u6p1c_PeKkvEXE",
+  authDomain: "swapx-4b762.firebaseapp.com",
+  projectId: "swapx-4b762",
+  storageBucket: "swapx-4b762.firebasestorage.app",
+  messagingSenderId: "125084061204",
+  appId: "1:125084061204:web:d9d106e42872733937a101",
+  measurementId: "G-51H0H3LEYS"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let userBalances = {};
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      currentUser = user;
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        userBalances = userSnap.data().balances || { BTC: 0, ETH: 0, USDT: 0 };
+        updateUI("BTC");
+      } else {
+        console.error("User data not found.");
+      }
+
+      document.getElementById('crypto-type').addEventListener('change', function() {
+        updateUI(this.value);
+      });
+
+      document.querySelector('.withdraw-button').addEventListener('click', processWithdrawal);
+    });
+
+    function updateUI(crypto) {
+      document.getElementById('available-balance').textContent = `${userBalances[crypto]} ${crypto}`;
+      const fees = { BTC: '0.0005 BTC', ETH: '0.005 ETH', USDT: '1 USDT' };
+      document.getElementById('transaction-fee').textContent = fees[crypto];
+    }
+
+    async function processWithdrawal() {
+      const cryptoType = document.getElementById('crypto-type').value;
+      const withdrawAmount = parseFloat(document.getElementById('withdraw-amount').value);
+      const walletAddress = document.getElementById('wallet-address').value.trim();
+
+      const errorMsg = document.getElementById('error-msg');
+      const successMsg = document.getElementById('success-msg');
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+
+      if (!walletAddress || withdrawAmount <= 0 || isNaN(withdrawAmount)) {
+        errorMsg.textContent = "Error: Invalid wallet address or amount.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (withdrawAmount > userBalances[cryptoType]) {
+        errorMsg.textContent = `Error: You don't have enough ${cryptoType}.`;
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      // Update balance and store withdrawal request
+      try {
+        const newBalance = userBalances[cryptoType] - withdrawAmount;
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          [`balances.${cryptoType}`]: newBalance
+        });
+
+        await addDoc(collection(db, "withdrawals"), {
+          uid: currentUser.uid,
+          cryptoType,
+          amount: withdrawAmount,
+          walletAddress,
+          status: "Pending",
+          timestamp: serverTimestamp()
+        });
+
+        successMsg.style.display = 'block';
+        updateUI(cryptoType);
+
+        // Placeholder: send email
+        console.log("Email sent to user for withdrawal request");
+      } catch (err) {
+        errorMsg.textContent = `Error: ${err.message}`;
+        errorMsg.style.display = 'block';
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #1e1e1e;
+      border: 1px solid #ff00ff;
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #ff00ff;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .detail {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      background: #2b2b2b;
+      border: 1px solid #ff00ff;
+      color: white;
+      border-radius: 5px;
+    }
+
+    .withdraw-button {
+      background: #ff00ff;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .withdraw-button:hover {
+      background: #ff66cc;
+    }
+
+    .success, .error {
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 5px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+    }
+
+    .success {
+      background-color: #00ff88;
+      color: #000;
+    }
+
+    .error {
+      background-color: #ff3333;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Withdraw Crypto</h1>
+    <div class="withdraw-form">
+      <div class="detail">
+        <strong>Available Balance:</strong> <span id="available-balance">Loading...</span>
+      </div>
+
+      <div class="detail">
+        <strong>Select Cryptocurrency:</strong>
+        <select id="crypto-type" class="input-field">
+          <option value="BTC">Bitcoin (BTC)</option>
+          <option value="ETH">Ethereum (ETH)</option>
+          <option value="USDT">Tether (USDT)</option>
+        </select>
+      </div>
+
+      <div class="detail">
+        <strong>Amount to Withdraw:</strong>
+        <input type="number" id="withdraw-amount" class="input-field" placeholder="Enter amount to withdraw" min="0.01" step="0.01" />
+      </div>
+
+      <div class="detail">
+        <strong>Your Wallet Address:</strong>
+        <input type="text" id="wallet-address" class="input-field" placeholder="Enter your crypto wallet address" />
+      </div>
+
+      <div class="detail">
+        <strong>Transaction Fee:</strong> <span id="transaction-fee">0.0005 BTC</span>
+      </div>
+
+      <button class="withdraw-button">Withdraw</button>
+    </div>
+
+    <div id="success-msg" class="success">Withdrawal successful! Your funds will be sent shortly.</div>
+    <div id="error-msg" class="error">Error: Something went wrong. Please try again.</div>
+  </div>
+</body>
+</html>

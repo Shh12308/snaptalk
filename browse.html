@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse Products - SwapX</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    h1, h2, .category-name {
+      color: #ff00ff;
+    }
+    .product-card {
+      background: #1e1e1e;
+      border: 1px solid #ff00ff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-right: 15px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      width: 250px;
+    }
+    .product-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
+    }
+    .cta-button {
+      background-color: #ff00ff;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    .cta-button:hover {
+      background-color: #ff66cc;
+    }
+    .search-input {
+      width: 100%;
+      max-width: 600px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ff00ff;
+      background-color: #1e1e1e;
+      color: white;
+    }
+    .category-row {
+      display: flex;
+      overflow-x: auto;
+      padding-bottom: 20px;
+      gap: 15px;
+    }
+    .category-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 20px 0 10px;
+    }
+    .product-price {
+      font-size: 1.2rem;
+      color: #ff00ff;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .add-product-btn {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background-color: #ff00ff;
+      color: white;
+      padding: 15px;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(255, 0, 255, 0.5);
+      font-size: 24px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .add-product-btn:hover {
+      background-color: #ff66cc;
+    }
+    footer {
+      background-color: #1a1a1a;
+      color: #ccc;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 1rem 0;
+      z-index: 10;
+    }
+    footer a {
+      color: #ff00ff;
+    }
+    footer a:hover {
+      color: #ff66cc;
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js"></script>
+
+  <script>
+    // Firebase and Firestore setup here (add your config)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Load products from Firestore dynamically
+    async function loadProducts(category) {
+      const snapshot = await db.collection(category).get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        addProduct(data, category);
+      });
+    }
+
+    function addProduct(product, category) {
+      const categoryRow1 = document.getElementById(category + '-row-1');
+      const categoryRow2 = document.getElementById(category + '-row-2');
+      const card = document.createElement('div');
+      card.classList.add('product-card');
+      card.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" class="w-full h-40 object-cover rounded-lg mb-4">
+        <h4 class="text-xl font-semibold text-pink-400">${product.name}</h4>
+        <p class="text-sm text-gray-300">${product.description}</p>
+        <div class="product-price">${product.price}</div>
+        <a href="product-detail.html?id=${product.id}" class="cta-button">View Details</a>
+      `;
+      if (categoryRow1.children.length <= categoryRow2.children.length) {
+        categoryRow1.appendChild(card);
+      } else {
+        categoryRow2.appendChild(card);
+      }
+    }
+
+    window.onload = function () {
+      const categories = ["electronics", "jewelry", "clothing", "homeGoods", "rentals", "nfts", "cryptoTech", "vehicles"];
+      categories.forEach(category => loadProducts(category));
+    };
+  </script>
+</head>
+<body>
+
+  <header class="bg-black py-4 shadow-md">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+      <a href="#" class="text-3xl font-bold text-pink-500">SwapX</a>
+      <div class="flex justify-center w-full">
+        <input type="text" id="search" class="search-input" placeholder="Search for products..." oninput="searchProducts()">
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto py-16 px-6 pb-32">
+    <div class="category"><div class="category-name">Electronics</div><div class="category-row" id="electronics-row-1"></div><div class="category-row" id="electronics-row-2"></div></div>
+    <div class="category"><div class="category-name">Jewelry</div><div class="category-row" id="jewelry-row-1"></div><div class="category-row" id="jewelry-row-2"></div></div>
+    <div class="category"><div class="category-name">Clothing</div><div class="category-row" id="clothing-row-1"></div><div class="category-row" id="clothing-row-2"></div></div>
+    <div class="category"><div class="category-name">Home Goods</div><div class="category-row" id="homeGoods-row-1"></div><div class="category-row" id="homeGoods-row-2"></div></div>
+    <div class="category"><div class="category-name">Rentals</div><div class="category-row" id="rentals-row-1"></div><div class="category-row" id="rentals-row-2"></div></div>
+    <div class="category"><div class="category-name">NFTs</div><div class="category-row" id="nfts-row-1"></div><div class="category-row" id="nfts-row-2"></div></div>
+    <div class="category"><div class="category-name">Crypto/Tech</div><div class="category-row" id="cryptoTech-row-1"></div><div class="category-row" id="cryptoTech-row-2"></div></div>
+    <div class="category"><div class="category-name">Vehicles</div><div class="category-row" id="vehicles-row-1"></div><div class="category-row" id="vehicles-row-2"></div></div>
+  </main>
+
+  <button class="add-product-btn" onclick="window.location.href = 'sign.html';">+</button>
+
+  <footer class="text-center">
+    <p>&copy; 2025 SwapX. All rights reserved.</p>
+    <div class="mt-4">
+      <a href="#" class="mx-4">Terms of Service</a>
+      <a href="profile" class="mx-4">Profile</a>
+      <a href="#" class="mx-4">Contact Us</a>
+    </div>
+  </footer>
+
+</body>
+</html>

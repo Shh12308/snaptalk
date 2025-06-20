@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - SwapX</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #333333;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #f6ad55, #ed8936, #fbd38d);
+            background-size: cover;
+            height: 60vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .cta-button {
+            background-color: #38b2ac;
+            color: white;
+            padding: 16px 36px;
+            text-transform: uppercase;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(56, 178, 172, 0.5);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .cta-button:hover {
+            background-color: #2b6cb0;
+            box-shadow: 0 6px 30px rgba(43, 108, 176, 0.6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div>
+        <h1 class="text-4xl font-semibold text-white">Order Confirmation</h1>
+        <p class="mt-4 text-xl text-white">Thank you for your order! Your order is being processed.</p>
+    </div>
+</section>
+
+<!-- Order Confirmation Details -->
+<section class="container mx-auto py-16 px-6">
+    <div class="bg-white p-8 rounded-lg shadow-lg">
+        <h2 class="text-3xl font-semibold text-yellow-400 text-center">Order Summary</h2>
+        <p class="mt-4 text-lg text-gray-600">Your order has been successfully placed.</p>
+
+        <!-- Order Details -->
+        <div class="mt-8">
+            <p class="text-lg text-gray-800 font-semibold">Order ID: <span id="order-id">Loading...</span></p>
+            <p class="text-lg text-gray-800 font-semibold">Payment Method: <span id="payment-method">Loading...</span></p>
+            <p class="text-lg text-gray-800 font-semibold">Amount Paid: <span id="amount-paid">Loading...</span></p>
+
+            <!-- Shipping Information -->
+            <div id="shipping-info" class="mt-6">
+                <h3 class="text-xl font-semibold text-gray-700">Shipping Details</h3>
+                <p class="text-gray-600">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Tracking Information from Firebase -->
+        <div id="tracking-info" class="mt-8">
+            <h3 class="text-xl font-semibold text-gray-700">Tracking Information</h3>
+            <p id="tracking-status" class="text-gray-600">Loading tracking details...</p>
+        </div>
+
+        <!-- Reminder to Seller Section (if applicable) -->
+        <div id="seller-reminder" class="mt-8 bg-yellow-100 p-4 rounded-lg">
+            <p class="text-lg text-gray-800 font-semibold">Reminder to Seller: Ship the product using Evri or Royal Mail. Payment will be released after confirmation.</p>
+        </div>
+
+        <!-- Return to Home Button -->
+        <div class="mt-8 text-center">
+            <a href="/" class="cta-button">Back to Home</a>
+        </div>
+    </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+
+<script>
+// Firebase configuration and initialization
+const firebaseConfig = {
+    apiKey: "your-api-key",
+    authDomain: "your-auth-domain",
+    projectId: "your-project-id",
+    storageBucket: "your-storage-bucket",
+    messagingSenderId: "your-sender-id",
+    appId: "your-app-id"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+async function fetchOrderDetails() {
+    // Assume the order ID is passed via query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('orderId');  // Get the orderId from the URL
+
+    if (!orderId) {
+        document.getElementById('tracking-status').textContent = 'Invalid order ID.';
+        return;
+    }
+
+    // Fetch order details from Firestore using the orderId
+    const orderRef = db.collection('orders').doc(orderId);
+    const orderDoc = await orderRef.get();
+
+    if (orderDoc.exists) {
+        const orderData = orderDoc.data();
+        
+        // Set the page with order details
+        document.getElementById('order-id').textContent = orderData.orderId;
+        document.getElementById('payment-method').textContent = orderData.paymentMethod;
+        document.getElementById('amount-paid').textContent = orderData.totalAmount;
+        
+        // Shipping info
+        document.getElementById('shipping-info').innerHTML = `
+            <h3 class="text-xl font-semibold text-gray-700">Shipping Details</h3>
+            <p class="text-gray-600">Name: ${orderData.shippingName}</p>
+            <p class="text-gray-600">Address: ${orderData.shippingAddress}</p>
+            <p class="text-gray-600">Zip Code: ${orderData.shippingZip}</p>
+        `;
+
+        // Fetch tracking info
+        const trackingStatus = await fetchTrackingInfo(orderData.trackingNumber);
+        document.getElementById('tracking-status').textContent = trackingStatus;
+    } else {
+        document.getElementById('tracking-status').textContent = 'Order not found.';
+    }
+}
+
+async function fetchTrackingInfo(trackingNumber) {
+    // Simulate fetching the tracking info (Replace with actual API call to Royal Mail/EVRI)
+    const trackingApiUrl = `https://api.example.com/track/${trackingNumber}`;
+    
+    try {
+        const response = await fetch(trackingApiUrl);
+        const data = await response.json();
+        
+        // Return the tracking status
+        if (data.status) {
+            return `Your package is: ${data.status}`;
+        } else {
+            return 'No tracking updates available yet.';
+        }
+    } catch (error) {
+        console.error('Error fetching tracking info:', error);
+        return 'Error fetching tracking details.';
+    }
+}
+
+// Run the fetch function when the page loads
+window.onload = fetchOrderDetails;
+</script>
+
+</body>
+</html>

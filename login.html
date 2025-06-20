@@ -1,255 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snaptalk - Video Calling</title>
-  <style>
-    /* General Styling */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #1e1e2f, #004aad);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SwapX</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
 
-    .container {
-      width: 90%;
-      max-width: 1200px;
-      text-align: center;
-    }
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+             apiKey: "AIzaSyBWOQpG6OijqOviZnPl9u6p1c_PeKkvEXE",
+  authDomain: "swapx-4b762.firebaseapp.com",
+  projectId: "swapx-4b762",
+  storageBucket: "swapx-4b762.firebasestorage.app",
+  messagingSenderId: "125084061204",
+  appId: "1:125084061204:web:d9d106e42872733937a101",
+  measurementId: "G-51H0H3LEYS"
+};
 
-    h1 {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #1db9ff;
-      margin-bottom: 20px;
-    }
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-    p {
-      font-size: 1.2rem;
-      color: #e0e0e0;
-      margin-bottom: 40px;
-    }
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
-    .button-group {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-    }
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    console.log("User logged in: ", user);
+                    window.location.href = 'index.html';
+                })
+                .catch((error) => {
+                    const errorMessage = error.message;
+                    alert("Error: " + errorMessage);
+                });
+        }
 
-    button {
-      padding: 15px 30px;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+        function goToSignUp() {
+            window.location.href = 'sign.html';
+        }
+    </script>
 
-    .start-call-btn {
-      background-color: #1db9ff;
-      color: #fff;
-    }
-
-    .start-call-btn:hover {
-      background-color: #0094cc;
-    }
-
-    .filters-btn {
-      background-color: #252525;
-      color: #1db9ff;
-      border: 2px solid #1db9ff;
-    }
-
-    .filters-btn:hover {
-      background-color: #1e1e2f;
-      color: #0094cc;
-      border-color: #0094cc;
-    }
-
-    /* Auth Form Styles */
-    .auth-container {
-      background-color: rgba(0, 0, 0, 0.8);
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-      max-width: 400px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    input {
-      padding: 12px;
-      font-size: 1rem;
-      width: 100%;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      border: none;
-      margin-top: 10px;
-    }
-
-    .auth-btn {
-      padding: 15px 30px;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
-      background-color: #1db9ff;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .auth-btn:hover {
-      background-color: #0094cc;
-    }
-
-    .auth-toggle {
-      font-size: 0.9rem;
-      color: #e0e0e0;
-      cursor: pointer;
-    }
-
-    footer {
-      margin-top: 60px;
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    footer a {
-      color: #1db9ff;
-      text-decoration: none;
-      margin: 0 5px;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+    <style>
+        body {
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .form-input {
+            margin-bottom: 15px;
+        }
+        .form-input input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            transition: border-color 0.3s ease;
+        }
+        .form-input input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .form-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+        .form-btn:hover {
+            background-color: #0056b3;
+        }
+        .link-text {
+            color: #007bff;
+            cursor: pointer;
+        }
+        .link-text:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Auth Container -->
-    <div class="auth-container" id="auth-container">
-      <h1 id="auth-heading">Login</h1>
-      <p id="auth-description">Enter your credentials to login or sign up!</p>
 
-      <div id="auth-form">
-        <input type="email" id="email" placeholder="Email" />
-        <input type="password" id="password" placeholder="Password" />
-        <button class="auth-btn" id="auth-btn">Login</button>
-      </div>
+    <div class="container">
+        <h2 class="text-3xl font-bold text-gray-900 mb-6">Login to SwapX</h2>
 
-      <p class="auth-toggle" id="auth-toggle">Don't have an account? Sign up</p>
+        <form onsubmit="event.preventDefault(); login();">
+            <div class="form-input">
+                <input type="email" id="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-input">
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+
+            <div class="form-input">
+                <button type="submit" class="form-btn">Login</button>
+            </div>
+        </form>
+
+        <div class="mt-6 text-gray-600">
+            <p>Don't have an account? <span class="link-text" onclick="goToSignUp()">Sign Up</span></p>
+            <p><span class="link-text">Forgot Password?</span></p>
+        </div>
     </div>
 
-    <!-- Video Call Section -->
-    <div id="video-call-section" style="display: none;">
-      <h1>Welcome to Snaptalk</h1>
-      <p>The ultimate platform for high-quality video calls with advanced connectivity. Connect with friends and family seamlessly!</p>
-      <div class="button-group">
-        <button class="start-call-btn" onclick="startCall()">Start Video Call</button>
-        <button class="filters-btn" onclick="goToFilters()">Set Filters</button>
-      </div>
-    </div>
-
-    <footer>
-      <p>© 2025 Snaptalk. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
-    </footer>
-  </div>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.2.0/firebase-analytics.js"></script>
-
-  <script>
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBNhwdNP7wDEBcIvVApge_jQqC46GX-Ei0",
-  authDomain: "snaptalk-17f6d.firebaseapp.com",
-  projectId: "snaptalk-17f6d",
-  storageBucket: "snaptalk-17f6d.firebasestorage.app",
-  messagingSenderId: "592763376854",
-  appId: "1:592763376854:web:c876f67dc5ea87080ce577",
-};
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    // Toggle between login and signup
-    const authToggle = document.getElementById('auth-toggle');
-    const authForm = document.getElementById('auth-form');
-    const authBtn = document.getElementById('auth-btn');
-    const authHeading = document.getElementById('auth-heading');
-    const authDescription = document.getElementById('auth-description');
-    const videoCallSection = document.getElementById('video-call-section');
-    const authContainer = document.getElementById('auth-container');
-
-    // Toggle to Sign Up form
-    authToggle.addEventListener('click', () => {
-      if (authHeading.innerText === 'Login') {
-        authHeading.innerText = 'Sign Up';
-        authDescription.innerText = 'Create a new account';
-        authBtn.innerText = 'Sign Up';
-        authToggle.innerText = 'Already have an account? Login';
-      } else {
-        authHeading.innerText = 'Login';
-        authDescription.innerText = 'Enter your credentials to login';
-        authBtn.innerText = 'Login';
-        authToggle.innerText = "Don't have an account? Sign up";
-      }
-    });
-
-    // Handle Login / Signup
-    authBtn.addEventListener('click', () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      if (authHeading.innerText === 'Login') {
-        // Login
-        auth.signInWithEmailAndPassword(email, password)
-          .then(() => {
-            videoCallSection.style.display = 'block';
-            authContainer.style.display = 'none';
-          })
-          .catch((error) => {
-            alert('Error: ' + error.message);
-          });
-      } else {
-        // Sign Up
-        auth.createUserWithEmailAndPassword(email, password)
-          .then(() => {
-            videoCallSection.style.display = 'block';
-            authContainer.style.display = 'none';
-          })
-          .catch((error) => {
-            alert('Error: ' + error.message);
-          });
-      }
-    });
-
-    // Start Video Call
-    function startCall() {
-      alert("Starting a video call... This feature will redirect to the video calling interface!");
-      // Redirect to your video call interface here
-      window.location.href = "videocall.html";
-    }
-
-    // Go to Filters
-    function goToFilters() {
-      window.location.href = "st2.html";
-    }
-  </script>
 </body>
 </html>
